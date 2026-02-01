@@ -1,13 +1,13 @@
 #include "HX711.h"
 
 //======================================================
-// 1) PINS (YOUR WIRING)
+// 1) Defining the pins
 //======================================================
 
 // HX711
 const int HX_DOUT = 8;
 const int HX_SCK  = 9;
-HX711 loadCell;
+HX711 loadCell;   // Creates an object inside the arduino. 
 
 // A4988
 const int PIN_STEP = 3;   // STEP -> D3
@@ -23,15 +23,15 @@ const unsigned int stepDelayMicros = 800;
 
 // Mechanics
 const int motorStepsPerRev = 200;
-const int microstepFactor  = 16;
-const float leadScrewPitch_mmPerRev = 1.5;  // mm per revolution
+const int microstepFactor  = 8;
+const float threadbarPitch_mmPerRev = 1.5;  // threadbar pitch
 
 float mmPerStep() {
-  return leadScrewPitch_mmPerRev / (motorStepsPerRev * microstepFactor);
+  return threadbarPitch_mmPerRev / (motorStepsPerRev * microstepFactor);
 }
 
 // Software travel limits
-const float MAX_TRAVEL_MM = 300.0;
+const float MAX_TRAVEL_MM = 450.0;
 const float MIN_TRAVEL_MM = 0.0;
 
 // Force calibration (placeholder)
@@ -40,40 +40,40 @@ float countsPerNewton = 12000.0;
 //======================================================
 // 3) STATE
 //======================================================
-bool runningTest = false;
+bool runningTest = false;   // flag to stop the motor from running all the time
 
-long stepCount = 0;
+long stepCount = 0; // count the no of micrsteps
 int dirSign = +1;   // +1 UP, -1 DOWN
 
-long rawForce = 0;
-float forceN = 0.0;
+long rawForce = 0; // raw no given by the HX711
+float forceN = 0.0; // store the force converted to Newtons
 
 // Streaming rate
-const unsigned long STREAM_PERIOD_MS = 50; // 20 Hz
+const unsigned long STREAM_PERIOD_MS = 50; // every 50 ms send one line. 
 unsigned long lastStreamMs = 0;
 
 // Step timing
-unsigned long lastStepUs = 0;
-unsigned long stepPeriodUs = 2UL * stepDelayMicros;
+unsigned long lastStepUs = 0; // stores the previous step size
+unsigned long stepPeriodUs = 2UL * stepDelayMicros; // wait time during steps
 
 //======================================================
 // 4) HELPERS
 //======================================================
-void enableDriver()  { digitalWrite(PIN_EN, LOW); }
+void enableDriver()  { digitalWrite(PIN_EN, LOW); }   // can use the function when needed
 void disableDriver() { digitalWrite(PIN_EN, HIGH); }
 
 float rawToNewton(long raw) {
-  return raw / countsPerNewton;
+  return raw / countsPerNewton;  // get the force in Newtons. 
 }
 
 bool waitForReady(unsigned long timeoutMs) {
   unsigned long t0 = millis();
   while (!loadCell.is_ready()) {
-    if (millis() - t0 > timeoutMs) return false;
+    if (millis() - t0 > timeoutMs) return false;  // timed out
   }
-  return true;
+  return true;   // HX711 became ready in time
 }
-
+// for safety
 bool travelLimitReached(float disp_mm) {
   if (disp_mm >= MAX_TRAVEL_MM) return true;
   if (disp_mm <= MIN_TRAVEL_MM && dirSign < 0) return true;
@@ -82,28 +82,27 @@ bool travelLimitReached(float disp_mm) {
 
 void doStepPulse() {
   digitalWrite(PIN_STEP, HIGH);
-  delayMicroseconds(3);
+  delayMicroseconds(5);
   digitalWrite(PIN_STEP, LOW);
 }
 
 //======================================================
 // 5) COMMAND HANDLER
 //======================================================
-void handleSerialCommands() {
-  if (!Serial.available()) return;
+void handleSerialCommands() {  //commands of the Python
+  if (!Serial.available()) return;  // if nothing arrived, exit 
 
-  String cmd = Serial.readStringUntil('\n');
+  String cmd = Serial.readStringUntil('\n');  // read until newline (full command)
   cmd.trim();
   cmd.toUpperCase();
 
   if (cmd == "START") {
-    runningTest = true;
+    runningTest = true; // this is made false at the begining
     enableDriver();
     Serial.println("OK START");
   }
-  else if (cmd == "STOP") {
-    runningTest = false;
-    disableDriver();
+  else if (cmd == "STOP") { // immediate stop from the GUI
+    runningTest = false; // didn't diable the driver to continue having the holding torque
     Serial.println("OK STOP");
   }
   else if (cmd == "ZERO_LEN") {
@@ -147,7 +146,7 @@ void handleSerialCommands() {
 void setup() {
   Serial.begin(9600);
   delay(800);
-
+// Controling the A4988
   pinMode(PIN_STEP, OUTPUT);
   pinMode(PIN_DIR, OUTPUT);
   pinMode(PIN_EN, OUTPUT);
@@ -155,7 +154,7 @@ void setup() {
   disableDriver();                 // motor disabled at boot
   digitalWrite(PIN_DIR, HIGH);     // default direction = UP
   dirSign = +1;
-
+// start HX711 communication
   loadCell.begin(HX_DOUT, HX_SCK);
 
   Serial.println("BOOT OK");
@@ -169,43 +168,44 @@ void loop() {
   handleSerialCommands();
 
   // Update force (non-blocking)
-  if (loadCell.is_ready()) {
+  if (loadCell.is_ready()) { // to avoid reading the old data
     rawForce = loadCell.read();
     forceN = rawToNewton(rawForce);
   }
 
-  if (!runningTest) {
+  if (runningTest == false) {  // to avoid the code running until the motor moves
     delay(10);
     return;
   }
 
-  float disp_mm = stepCount * mmPerStep();
+  float disp_mm = stepCount * mmPerStep(); //mmPerStep() = 0.0009375 mm
 
-  if (travelLimitReached(disp_mm)) {
+  if (travelLimitReached(disp_mm)) {   // stop the test if reached the max height
     runningTest = false;
     disableDriver();
     Serial.println("ERR LIMIT");
     return;
   }
 
-  // Step motor
-  unsigned long nowUs = micros();
-  if (nowUs - lastStepUs >= stepPeriodUs) {
-    lastStepUs = nowUs;
+// to control the motor speed
+  unsigned long nowMicros = micros();
+  if (nowMicros - lastStepUs >= stepPeriodUs) {
+    lastStepUs = nowMicros;
     doStepPulse();
     stepCount += dirSign;
   }
 
-  // Stream data
+  // CSV output
   unsigned long nowMs = millis();
   if (nowMs - lastStreamMs >= STREAM_PERIOD_MS) {
-    lastStreamMs = nowMs;
-    disp_mm = stepCount * mmPerStep();
+    lastStreamMs = nowMs; // Save the current time
+    disp_mm = stepCount * mmPerStep(); // Update the position
 
     Serial.print(nowMs);
     Serial.print(",");
-    Serial.print(forceN, 3);
+    Serial.print(forceN, 3);  // upto 3 decimael places
     Serial.print(",");
     Serial.println(disp_mm, 4);
   }
 }
+
