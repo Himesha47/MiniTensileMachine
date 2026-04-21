@@ -1,54 +1,46 @@
 #include "HX711.h"
 
-// -------------------- PINS (YOUR SETUP) --------------------
+// ---------- Pins ----------
 #define STEP_PIN 3
 #define DIR_PIN  4
-#define EN_PIN   5   // A4988 EN: LOW = enabled, HIGH = disabled
+#define EN_PIN   5          // LOW = enable (A4988)
 
-#define HX_DOUT  8   // HX711 DT -> D8
-#define HX_SCK   9   // HX711 SCK -> D9
-
+#define HX_DOUT  8          // HX711 DT
+#define HX_SCK   9          // HX711 SCK
 HX711 loadCell;
 
-// -------------------- MECHANICS --------------------
-// Adjust these to match your real hardware
-const int   STEPS_PER_REV = 200;   // NEMA17 full steps per rev
-const int   MICROSTEP     = 16;    // 1/16 microstepping
-const float PITCH_MM      = 1.5;   // lead screw mm per revolution
+// ---------- Mechanics ----------
+const int   STEPS_PER_REV = 200;
+const int   MICROSTEP     = 16;
+const float PITCH_MM      = 1.5;
 
 const float MM_PER_STEP = PITCH_MM / (STEPS_PER_REV * MICROSTEP);
 
-// -------------------- FORCE (placeholder for now) --------------------
-float countsPerNewton = 12000.0;   // keep as placeholder for now
+// ---------- Force (placeholder) ----------
+float countsPerNewton = 12000.0;
+float forceN = 0.0;
 
-// -------------------- STATE --------------------
+// ---------- State ----------
 bool running = false;
 bool dirDown = true;
 
-long stepCount = 0;  // total microsteps
-long stepZero  = 0;  // displacement zero reference (ZERO_LEN)
+long stepCount = 0;
+long stepZero  = 0;
 
-float forceN = 0.0;
-
-// speed (smaller = faster)
+// ---------- Timing ----------
 int stepDelayUs = 800;
-
-// timing
 unsigned long lastStepUs   = 0;
 unsigned long lastStreamMs = 0;
-const unsigned long STREAM_PERIOD_MS = 50; // 20 Hz
+const unsigned long STREAM_PERIOD_MS = 50;
 
-// -------------------- DRIVER HELPERS --------------------
+// ---------- Driver helpers ----------
 void enableDriver()  { digitalWrite(EN_PIN, LOW);  }
 void disableDriver() { digitalWrite(EN_PIN, HIGH); }
 
-// ✅ FIXED: Direction mapping (swap HIGH/LOW here if needed)
+// DOWN/UP mapping (if reversed, swap HIGH/LOW here)
 void setDirection(bool down) {
   dirDown = down;
-
-  // You said: DOWN should be real down.
-  // If your mechanics are reversed, swap the HIGH/LOW below.
-  digitalWrite(DIR_PIN, down ? HIGH : LOW);   // <--- swapped mapping
+  digitalWrite(DIR_PIN, down ? HIGH : LOW);
 }
 
 void stepPulse() {
@@ -60,7 +52,6 @@ void stepPulse() {
   else         stepCount--;
 }
 
-// -------------------- MEASUREMENTS --------------------
 float getDispMM() {
   return (stepCount - stepZero) * MM_PER_STEP;
 }
@@ -72,11 +63,7 @@ void updateForceNonBlocking() {
   }
 }
 
-// -------------------- SERIAL COMMANDS --------------------
-void printHeader() {
-  Serial.println("t_ms,force_N,disp_mm");
-}
-
+// ---------- Serial commands ----------
 void handleCommand(String cmd) {
   cmd.trim();
   cmd.toUpperCase();
@@ -93,4 +80,71 @@ void handleCommand(String cmd) {
   }
   else if (cmd == "DIR DOWN") {
     if (running) Serial.println("ERR STOP_FIRST");
-    else { setDirection(true); Serial.println
+    else { setDirection(true); Serial.println("OK DIR_DOWN"); }
+  }
+  else if (cmd == "DIR UP") {
+    if (running) Serial.println("ERR STOP_FIRST");
+    else { setDirection(false); Serial.println("OK DIR_UP"); }
+  }
+  else if (cmd == "TARE") {
+    loadCell.tare();
+    Serial.println("OK TARE");
+  }
+  else if (cmd == "ZERO_LEN") {
+    stepZero = stepCount;
+    Serial.println("OK ZERO_LEN");
+  }
+  else {
+    Serial.println("ERR UNKNOWN_CMD");
+  }
+}
+
+void readSerialCommands() {
+  if (Serial.available()) {
+    String cmd = Serial.readStringUntil('\n');
+    handleCommand(cmd);
+  }
+}
+
+void setup() {
+  Serial.begin(9600);
+  delay(500);
+
+  pinMode(STEP_PIN, OUTPUT);
+  pinMode(DIR_PIN, OUTPUT);
+  pinMode(EN_PIN, OUTPUT);
+
+  disableDriver();
+  setDirection(true);  // default DOWN
+
+  loadCell.begin(HX_DOUT, HX_SCK);
+
+  Serial.println("READY");
+  Serial.println("t_ms,force_N,disp_mm");
+}
+
+void loop() {
+  readSerialCommands();
+  updateForceNonBlocking();
+
+  if (running) {
+    unsigned long nowUs = micros();
+    unsigned long periodUs = (unsigned long)stepDelayUs * 2UL;
+
+    if (nowUs - lastStepUs >= periodUs) {
+      lastStepUs = nowUs;
+      stepPulse();
+    }
+  }
+
+  unsigned long nowMs = millis();
+  if (nowMs - lastStreamMs >= STREAM_PERIOD_MS) {
+    lastStreamMs = nowMs;
+
+    Serial.print(nowMs);
+    Serial.print(",");
+    Serial.print(forceN, 3);
+    Serial.print(",");
+    Serial.println(getDispMM(), 4);
+  }
+}

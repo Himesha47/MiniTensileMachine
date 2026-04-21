@@ -33,6 +33,8 @@ class TensileGUI:
         self.t_s    = deque(maxlen=self.max_points) # store time in s 
         self.force  = deque(maxlen=self.max_points) # store force in N
         self.disp   = deque(maxlen=self.max_points) # store displacement in mm
+        self.force_window = deque(maxlen=5)
+        self.disp_window = deque(maxlen=5)
         self.stress = deque(maxlen=self.max_points) # stores computed stress values
         self.strain = deque(maxlen=self.max_points) # stores computed strain values
 
@@ -116,6 +118,8 @@ class TensileGUI:
         self.canvas = FigureCanvasTkAgg(fig, master=self.root)
         self.canvas.get_tk_widget().grid(row=1, column=0, padx=10, pady=10)
         # places the graph widget into the GUI layout
+        self.root.grid_rowconfigure(1, weight=1) # graph expands with the window expanding
+        self.root.grid_columnconfigure(0, weight=1)
 
         # UI state
         self.set_ui_running(False)
@@ -265,7 +269,6 @@ class TensileGUI:
             self.status_var.set("RUNNING...")
 
 
-
     def stop_test(self):
         if self.send_cmd("STOP"):
             self.set_ui_running(False)
@@ -275,6 +278,8 @@ class TensileGUI:
         self.t_s.clear() # empties the time buffer
         self.force.clear()
         self.disp.clear()
+        self.force_window.clear()
+        self.disp_window.clear()
         self.stress.clear()
         self.strain.clear()
         self.t0_ms = None # Reset time reference
@@ -322,66 +327,80 @@ class TensileGUI:
     # READ SERIAL
     # ----------------------------------------------------
     def read_serial(self):
-        if self.ser and self.ser.is_open: # serial object exists and Port is open
+        if self.ser and self.ser.is_open:  # serial object exists and Port is open
             try:
                 while self.ser.in_waiting:
                     line = self.ser.readline().decode(errors="ignore").strip()
-                    # decode():bytes to string
+                    # decode(): bytes to string
                     if not line:
                         continue
 
                     # Ignore non-data lines
                     if line.startswith("OK") or line.startswith("ERR") or line.startswith("BOOT"):
-                        # ignore OK,ERR,BOOT msgs sent by arduino
+                        # ignore OK, ERR, BOOT msgs sent by Arduino
                         self.status_var.set(line)
                         continue
-                    if line.lower().startswith("t_ms"):# Ignore Header Line
+                    if line.lower().startswith("t_ms"):  # Ignore header line
                         continue
 
-                    parts = line.split(",")# Split the Data
-                    if len(parts) != 3: # check whether time, force, and displacement values are present
+                    parts = line.split(",")  # Split the data
+                    if len(parts) != 3:  # check whether time, force, and displacement values are present
                         continue
 
                     try:
                         t_ms = int(float(parts[0]))
                         forceN = float(parts[1])
                         dispMM = float(parts[2])
-                    except: # error handling
+                    except:  # error handling
                         continue
 
-                    if forceN < 0 or dispMM < 0:
+                    if dispMM < 0:
                         continue
 
                     if self.t0_ms is None:
-                        self.t0_ms = t_ms # First data point becomes time = 0
-                    t_sec = (t_ms - self.t0_ms) / 1000.0 # convert to seconds
+                        self.t0_ms = t_ms  # First data point becomes time = 0
+                    t_sec = (t_ms - self.t0_ms) / 1000.0  # convert to seconds
 
-                    self.t_s.append(t_sec) # adds a new value to the end of the buffer
-                    self.force.append(forceN)
-                    self.disp.append(dispMM)
+                    # Store last 5 readings
+                    self.force_window.append(forceN)
+                    self.disp_window.append(dispMM)
 
-                    # stress/strain
-                    try:
-                        L0_txt = self.L0_var.get().strip()
-                        A_txt  = self.A_var.get().strip()
-                        if L0_txt and A_txt: # only continue if both input boxes contain something
-                            L0 = float(L0_txt); A = float(A_txt)
-                            if L0 > 0 and A > 0:
-                                # Calculate strain and stress
-                                self.strain.append(dispMM / L0)
-                                self.stress.append(forceN / A)
+                    # Only process when 5 values available
+                    if len(self.force_window) == 5:
+                        avg_force = sum(self.force_window) / 5
+                        avg_disp = sum(self.disp_window) / 5
+
+                        self.t_s.append(t_sec)
+                        self.force.append(avg_force)
+                        self.disp.append(avg_disp)
+
+                        # stress/strain
+                        try:
+                            L0_txt = self.L0_var.get().strip()
+                            A_txt = self.A_var.get().strip()
+
+                            if L0_txt and A_txt:  # only continue if both input boxes contain something
+                                L0 = float(L0_txt)
+                                A = float(A_txt)
+
+                                if L0 > 0 and A > 0:
+                                    # Calculate strain and stress
+                                    self.strain.append(avg_disp / L0)
+                                    self.stress.append(avg_force / A)
+                                else:
+                                    self.strain.append(0.0)
+                                    self.stress.append(0.0)
                             else:
-                                self.strain.append(0.0); self.stress.append(0.0)
-                        else:
-                            self.strain.append(0.0); self.stress.append(0.0)
-                    except:
-                        self.strain.append(0.0); self.stress.append(0.0)
+                                self.strain.append(0.0)
+                                self.stress.append(0.0)
+                        except:
+                            self.strain.append(0.0)
+                            self.stress.append(0.0)
 
-            except Exception as e: # Read the error
+            except Exception as e:  # Read the error
                 self.status_var.set(f"Read error: {e}")
 
-        self.root.after(50, self.read_serial) # run read_serial again and again in 50 ms
-
+        self.root.after(50, self.read_serial)  # run read_serial again and again in 50 ms
     # ----------------------------------------------------
     # PLOT
     # ----------------------------------------------------
@@ -411,7 +430,9 @@ class TensileGUI:
         else:
             x = []; y = [] # Fallback case to prevent crashing
 
-        self.line.set_data(x, y)
+        self.ax.grid(True)
+
+        self.line.set_data(x, y) # updates the existing plotted line
         self.ax.relim()     # Recalculate axis limits
         self.ax.autoscale_view()      # auto range (no manual range needed)
         self.canvas.draw() # refreshes the graph on the screen
@@ -436,5 +457,6 @@ class TensileGUI:
 
 if __name__ == "__main__":
     root = tk.Tk()
+    root.state('zoomed') # to get the full screen
     app = TensileGUI(root)# pass the window (root) into the class
     root.mainloop()

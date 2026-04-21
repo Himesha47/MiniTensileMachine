@@ -75,8 +75,8 @@ bool waitForReady(unsigned long timeoutMs) {
 }
 
 bool travelLimitReached(float disp_mm) {
-  if (disp_mm >= MAX_TRAVEL_MM) return true;
-  if (disp_mm <= MIN_TRAVEL_MM && dirSign < 0) return true;
+  if (disp_mm >= MAX_TRAVEL_MM && dirSign>0) return true;
+  // no lower limit
   return false;
 }
 
@@ -128,7 +128,9 @@ void handleSerialCommands() {
       digitalWrite(PIN_DIR, HIGH);
       dirSign = +1;
       Serial.println("OK DIR_UP");
-    }
+    } else {
+        Serial.println("ERR STOP_FIRST");
+   }
   }
 
   else if (cmd == "DIR DOWN") {
@@ -153,7 +155,8 @@ void setup() {
   pinMode(PIN_EN, OUTPUT);
 
   disableDriver();
-  digitalWrite(PIN_DIR, LOW);
+  digitalWrite(PIN_DIR, HIGH);
+  dirSign=+1;
 
   loadCell.begin(HX_DOUT, HX_SCK);
 
