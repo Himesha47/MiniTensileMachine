@@ -89,8 +89,9 @@ class TensileGUI:
         self.root.title("Mini Tensile Tester")
         self.root.configure(bg=COLOR_BG)  # Set the window background colour
 
-        self.ser     = None         # Serial object — None means not yet connected
-        self.running = False        # True while a test is running, False otherwise
+        self.ser     = None # Serial object — None means not yet connected
+        self.running = False  # True while a test is running, False otherwise
+        self.taring = False  # True while waiting for Arduino to confirm TARE
 
         #Input validation 
         vcmd = (self.root.register(self._validate_positive), "%P") # entry box validation
@@ -558,17 +559,11 @@ class TensileGUI:
     def do_tare(self):
         # Send TARE command to Arduino to zero the load cell
         if self.send_cmd("TARE"):
-            # Clear averaging windows so old readings don't drag the average
-            self.force_window.clear()
+            self.taring = True        # Block incoming readings until Arduino confirms
+            self.force_window.clear() # Clear old averaged readings
             self.disp_window.clear()
-            # Immediately show 0 on the card
-            self.card_force.set("  0.00")
-            # Fill the window with 40 zeros so the average stays at 0
-            # until real post-tare readings arrive from Arduino
-            for _ in range(self.force_window.maxlen):
-                self.force_window.append(0.0)
-            self.status_var.set("Tare done.")
-
+            self.card_force.set("  0.00")  # Show 0 immediately on the card
+            self.status_var.set("Taring… please wait.")
 
     def _validate_positive(self, value):
         # Called automatically every time the user types in L0 or Area box
@@ -720,8 +715,17 @@ class TensileGUI:
 
                     # Skip non-data lines from the Arduino
                     if raw.startswith(("OK", "BOOT")):
-                        self.status_var.set(raw)  # Show acknowledgement or error in status bar
+                        if raw == "OK TARE":
+                            # Arduino has finished taring — now safe to accept new readings
+                            self.taring = False
+                            self.force_window.clear()  # Clear any readings that snuck in
+                            self.disp_window.clear()
+                            self.card_force.set("  0.00")
+                            self.status_var.set("Tare done.")
+                        else:
+                            self.status_var.set(raw)
                         continue
+
                     if raw == "ERR LIMIT":
                         continue  # Limit removed — ignore any stale messages
                     if raw.startswith("ERR"):
@@ -753,7 +757,9 @@ class TensileGUI:
                         self.t0_ms = t_ms
                     t_sec = (t_ms - self.t0_ms) / 1000.0  # Convert ms → s
 
-                    # Add raw reading to the 15-point moving average windows
+                    # Ignore all readings while Arduino is still taring
+                    if self.taring:
+                        continue
                     self.force_window.append(forceN)
                     self.disp_window .append(dispMM)
 

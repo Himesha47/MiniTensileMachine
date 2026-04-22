@@ -32,7 +32,7 @@ const float MAX_TRAVEL_MM = 450.0;
 const float MIN_TRAVEL_MM = 0.0;
 
 // ✅ YOUR CALIBRATION VALUE
-float countsPerNewton = 10698.0;
+float countsPerNewton = -10698.0;
 
 //======================================================
 // 3) STATE
