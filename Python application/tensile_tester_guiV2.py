@@ -91,6 +91,7 @@ class TensileGUI:
 
         self.ser     = None # Serial object — None means not yet connected
         self.running = False  # True while a test is running, False otherwise
+        self.force_offset = 0.0  # Force offset applied after tare to ensure readings start at 0
         self.taring = False  # True while waiting for Arduino to confirm TARE
 
         #Input validation 
@@ -557,13 +558,18 @@ class TensileGUI:
         self.root.after(300, lambda: None)
 
     def do_tare(self):
-        # Send TARE command to Arduino to zero the load cell
         if self.send_cmd("TARE"):
-            self.taring = True        # Block incoming readings until Arduino confirms
-            self.force_window.clear() # Clear old averaged readings
+            # Capture offset NOW before clearing — window is still full of pre-tare readings
+            if len(self.force_window) == self.force_window.maxlen:
+                self.force_offset = sum(self.force_window) / self.force_window.maxlen
+            else:
+                self.force_offset = 0.0
+            # Now block new readings and clear old ones
+            self.taring = True
+            self.force_window.clear()
             self.disp_window.clear()
-            self.card_force.set("  0.00")  # Show 0 immediately on the card
-            self.status_var.set("Taring… please wait.")
+            self.card_force.set("  0.00")
+            self.status_var.set(f"Taring… Offset={self.force_offset:.3f}N")
 
     def _validate_positive(self, value):
         # Called automatically every time the user types in L0 or Area box
@@ -716,15 +722,12 @@ class TensileGUI:
                     # Skip non-data lines from the Arduino
                     if raw.startswith(("OK", "BOOT")):
                         if raw == "OK TARE":
-                            # Arduino has finished taring — now safe to accept new readings
                             self.taring = False
-                            self.force_window.clear()  # Clear any readings that snuck in
+                            # Offset already captured in do_tare — just clear and reset
+                            self.force_window.clear()
                             self.disp_window.clear()
                             self.card_force.set("  0.00")
-                            self.status_var.set("Tare done.")
-                        else:
-                            self.status_var.set(raw)
-                        continue
+                            self.status_var.set(f"Tare done. Offset={self.force_offset:.3f}N")
 
                     if raw == "ERR LIMIT":
                         continue  # Limit removed — ignore any stale messages
@@ -760,7 +763,8 @@ class TensileGUI:
                     # Ignore all readings while Arduino is still taring
                     if self.taring:
                         continue
-                    self.force_window.append(forceN)
+                    # Apply offset so force always starts from 0 after tare
+                    self.force_window.append(forceN - self.force_offset)
                     self.disp_window .append(dispMM)
 
                     # Always compute live average for card display
