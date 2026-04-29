@@ -2,6 +2,20 @@
 # MiniTensileMachine — .gitignore
 # ============================================
 
+# ----- Exported test results -----
+# CSV data files and PNG plots exported by the GUI go into results/.
+# The folder itself is tracked via results/.gitkeep — its contents are not.
+results/
+!results/.gitkeep
+
+# Belt-and-suspenders: ignore any stray CSV/PNG that land outside results/
+*.csv
+*.png
+
+# ----- Logs -----
+logs/
+*.log
+
 # ----- Python -----
 __pycache__/
 *.py[cod]
@@ -15,15 +29,6 @@ build/
 .venv/
 venv/
 env/
-
-# ----- Test data & exported results -----
-# CSV data files and PNG plots exported by the GUI
-# (keep them locally but don't track in git)
-*.csv
-*.png
-
-# If you want to track specific important images (e.g. screenshots for README),
-# use: git add -f <filename>
 
 # ----- KiCad (PCB design) -----
 # Auto-generated backup & history files

@@ -1,52 +1,126 @@
+"""
+Mini Tensile Tester — GUI Application
+======================================
+Main desktop application for the MiniTensileMachine project.
+
+Requirements (install with):  pip install -r requirements.txt
+    pyserial >= 3.5
+    matplotlib >= 3.7
+    tkinter   (bundled with standard Python on Windows)
+
+Exported results (.csv / .png) are saved to the results/ folder
+by default when using the EXPORT button.
+"""
+
 import tkinter as tk         # Create GUI applications
-from tkinter import ttk   # Set of themed widgets
-import serial  # Serial communication with Arduino
+from tkinter import ttk      # Set of themed widgets
+import serial                # Serial communication with Arduino
 import serial.tools.list_ports  # Detect which port the Arduino is on
-import time      # Time-related operations
-from collections import deque    # Data container for live incoming readings
-import csv    # Save data as spreadsheet-compatible files
-import os   # File and folder path operations
+import time                  # Time-related operations
+from collections import deque   # Data container for live incoming readings
+import csv                   # Save data as spreadsheet-compatible files
+import os                    # File and folder path operations
+import logging               # Structured logging instead of bare print()
+from pathlib import Path     # Clean, cross-platform path handling
+from dataclasses import dataclass  # Config dataclass
 from tkinter import filedialog  # Open the "Save As" window
 
-import matplotlib   # Plotting library
-matplotlib.use("TkAgg")   # Tell matplotlib to draw inside a Tkinter window
+import matplotlib            # Plotting library
+matplotlib.use("TkAgg")     # Tell matplotlib to draw inside a Tkinter window
 import matplotlib.pyplot as plt  # Used to create the figure and axes
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # Joins matplotlib graph into Tkinter window
 
+# ---------------------------------------------------------------------------
+# LOGGING SETUP
+# ---------------------------------------------------------------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s  %(levelname)-8s  %(message)s",
+    datefmt="%H:%M:%S",
+)
+log = logging.getLogger(__name__)
+
 # ----------------------------------------------------------------------------
-# 1. CONSTANTS
+# 1. CONSTANTS & CONFIGURATION
 # -----------------------------------------------------------------------------
 
-# Font definitions
-FONT_LABEL  = ("Courier New", 9,  "bold")   # Small label above each card
-FONT_VALUE  = ("Courier New", 18, "bold")   # Big number inside each card
-FONT_UNIT   = ("Courier New", 9)            # Unit text beside the big number
-FONT_STATUS = ("Courier New", 10, "bold")   # Status pill text (IDLE / RUNNING / BROKEN)
-FONT_BTN    = ("Courier New", 9,  "bold")   # All toolbar buttons
+@dataclass
+class Config:
+    """Central place for all tuneable constants and UI settings."""
 
-# Colour palette 
-COLOR_BG      = "#F7F7F5"   # Page background (warm off-white)
-COLOR_CARD    = "#FFFFFF"   # Metric card background (pure white)
-COLOR_BORDER  = "#D0D0CC"   # Card and separator borders (light grey)
-COLOR_ACCENT  = "#1A56DB"   # Primary blue —  START button and main plot line
-COLOR_PEAK    = "#D93025"   # Red —  peak markers and STOP button
-COLOR_TEXT    = "#000000"   # Main text colour 
-COLOR_SUBTEXT = "#000000"   # Secondary text — units, labels (mid grey)
-COLOR_IDLE    = "#888888"   # Status pill colour when idle
-COLOR_RUNNING = "#1A56DB"   # Status pill colour when running
-COLOR_BROKEN  = "#D93025"   # Status pill colour when fracture detected
+    # --- Fonts ---
+    font_label:  tuple = ("Courier New", 9,  "bold")   # Small label above each card
+    font_value:  tuple = ("Courier New", 18, "bold")   # Big number inside each card
+    font_unit:   tuple = ("Courier New", 9)            # Unit text beside the big number
+    font_status: tuple = ("Courier New", 10, "bold")   # Status pill text
+    font_btn:    tuple = ("Courier New", 9,  "bold")   # All toolbar buttons
 
-BREAK_DROP_FRACTION = 0.30  # 30% drop needed
-ELASTIC_WINDOW = 0.005     
+    # --- Colours ---
+    color_bg:      str = "#F7F7F5"  # Page background (warm off-white)
+    color_card:    str = "#FFFFFF"  # Metric card background (pure white)
+    color_border:  str = "#D0D0CC"  # Card and separator borders (light grey)
+    color_accent:  str = "#1A56DB"  # Primary blue — START button and main plot line
+    color_peak:    str = "#D93025"  # Red — peak markers and STOP button
+    color_text:    str = "#000000"  # Main text colour
+    color_subtext: str = "#000000"  # Secondary text — units, labels
+    color_idle:    str = "#888888"  # Status pill colour when idle
+    color_running: str = "#1A56DB"  # Status pill colour when running
+    color_broken:  str = "#D93025"  # Status pill colour when fracture detected
 
-# Speed-to-mmPerStep lookup — must match Arduino setSpeed() exactly
-# mmPerStep = threadPitch / (stepsPerRev * microstepFactor)
-MM_PER_STEP = {
-    10:  1.5 / (200 * 16),   # 0.00046875 mm — microstep factor 16
-    20:  1.5 / (200 * 16),   # 0.00046875 mm — microstep factor 16
-    50:  1.5 / (200 * 16),   # 0.00046875 mm — microstep factor 16
-    100: 1.5 / (200 * 8),    # 0.00093750 mm — microstep factor 8
-}
+    # --- Physics / detection ---
+    break_drop_fraction: float = 0.30   # 30 % force drop triggers fracture detection
+    elastic_window:      float = 0.005  # Max strain used for Young's modulus fit
+
+    # --- Speed lookup — must match Arduino setSpeed() exactly ---
+    # mmPerStep = threadPitch / (stepsPerRev * microstepFactor)
+    mm_per_step: dict = None
+
+    def __post_init__(self):
+        if self.mm_per_step is None:
+            self.mm_per_step = {
+                10:  1.5 / (200 * 16),   # 0.00046875 mm — microstep factor 16
+                20:  1.5 / (200 * 16),
+                50:  1.5 / (200 * 16),
+                100: 1.5 / (200 * 8),    # 0.00093750 mm — microstep factor 8
+            }
+
+    # --- Paths ---
+    @staticmethod
+    def results_dir() -> Path:
+        """Absolute path to the results/ folder (sibling of this script's parent dir)."""
+        # Structure: MiniTensileMachine/
+        #               Python application/tensile_tester_guiV5.py  ← this file
+        #               results/                                     ← export target
+        here = Path(__file__).resolve().parent  # …/Python application/
+        candidate = here.parent / "results"     # …/MiniTensileMachine/results/
+        candidate.mkdir(parents=True, exist_ok=True)  # Create if missing
+        return candidate
+
+
+# Instantiate once — every part of the app imports from this object
+CFG = Config()
+
+# Keep module-level aliases so existing code needs no changes
+FONT_LABEL  = CFG.font_label
+FONT_VALUE  = CFG.font_value
+FONT_UNIT   = CFG.font_unit
+FONT_STATUS = CFG.font_status
+FONT_BTN    = CFG.font_btn
+
+COLOR_BG      = CFG.color_bg
+COLOR_CARD    = CFG.color_card
+COLOR_BORDER  = CFG.color_border
+COLOR_ACCENT  = CFG.color_accent
+COLOR_PEAK    = CFG.color_peak
+COLOR_TEXT    = CFG.color_text
+COLOR_SUBTEXT = CFG.color_subtext
+COLOR_IDLE    = CFG.color_idle
+COLOR_RUNNING = CFG.color_running
+COLOR_BROKEN  = CFG.color_broken
+
+BREAK_DROP_FRACTION = CFG.break_drop_fraction
+ELASTIC_WINDOW      = CFG.elastic_window
+MM_PER_STEP         = CFG.mm_per_step
 
 # -----------------------------------------------------------------
 # 2. METRIC CARD WIDGET
@@ -554,7 +628,7 @@ class TensileGUI:
 
                 try:
                     s.reset_input_buffer()  # Discard any leftover data from before
-                except:
+                except Exception:
                     pass
 
                 # Read lines from this port for up to 2 seconds
@@ -577,7 +651,7 @@ class TensileGUI:
                 else:
                     s.close()  # Not the Arduino — close this port and try the next one
 
-            except:
+            except Exception:
                 pass  # Port couldn't be opened — skip it
 
         self.status_var.set("Arduino not found. Plug in and restart.")
@@ -760,24 +834,31 @@ class TensileGUI:
         self.status_var.set("Cleared.")
 
     def save_data_and_plot(self):
-        # Export the collected data as a .csv file and the current graph as a .png file
+        """Export collected data as .csv and the current graph as .png.
 
+        The Save As dialog opens pre-navigated to the results/ folder so the
+        user can still rename or relocate the file if needed (Option A).
+        """
         if not self.t_s:
             self.status_var.set("No data to save.")
             return
 
-        # Open a "Save As" dialog for the user to choose the file location and name
+        # Resolve the default save directory (results/ next to this script's project root)
+        default_dir = str(CFG.results_dir())
+
+        # Open a "Save As" dialog — pre-navigated to results/
         path = filedialog.asksaveasfilename(
             defaultextension=".csv",
             filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
-            title="Export data")
+            initialdir=default_dir,
+            title="Export test data")
 
         if not path:
             self.status_var.set("Export cancelled.")
             return
 
         try:
-            base, _ = os.path.splitext(path)  # Remove the extension to build both file names
+            base = str(Path(path).with_suffix(""))  # Remove extension — pathlib handles OS differences
 
             # Write the CSV file
             with open(base + ".csv", "w", newline="") as f:
@@ -789,14 +870,17 @@ class TensileGUI:
                                self.strain, self.stress):
                     writer.writerow(row)
 
-            # Save the current graph as a PNG image
+            # Save the current graph as a high-resolution PNG
             self.fig.savefig(base + ".png", dpi=300, bbox_inches="tight")
-            # dpi=300        - high resolution suitable for reports
-            # bbox_inches="tight" → crop whitespace around the graph
+            # dpi=300             — high resolution suitable for reports
+            # bbox_inches="tight" — crop whitespace around the graph
 
-            self.status_var.set(f"Saved  ·  {os.path.basename(base)}.csv / .png")
+            stem = Path(base).name
+            log.info("Exported: %s.csv / .png", stem)
+            self.status_var.set(f"Saved  ·  {stem}.csv / .png")
 
         except Exception as e:
+            log.error("Export failed: %s", e)
             self.status_var.set(f"Save error: {e}")
 
     # -----------------------------------------------------------------
@@ -842,7 +926,7 @@ class TensileGUI:
                         t_ms   = int(float(parts[0]))  # Time in milliseconds
                         forceN = float(parts[1])        # Force in Newtons
                         dispMM = float(parts[2])        # Displacement in mm
-                    except:
+                    except Exception:
                         continue  # Conversion failed — skip this line
 
                     if dispMM < -500.0:
@@ -904,7 +988,7 @@ class TensileGUI:
                             else:
                                 self.strain.append(0.0)
                                 self.stress.append(0.0)
-                        except:
+                        except Exception:
                             self.strain.append(0.0)
                             self.stress.append(0.0)
 
@@ -1084,7 +1168,7 @@ class TensileGUI:
                 try:
                     L0 = float(self.L0_var.get())
                     bx = self.break_disp / L0  # x = strain at fracture
-                except:
+                except Exception:
                     bx = None
 
             else:
@@ -1129,13 +1213,13 @@ class TensileGUI:
             if self.ser and self.ser.is_open:
                 self.ser.write(b"STOP\n")  # b"..." = bytes literal (no .encode() needed)
                 time.sleep(0.1)  # Give Arduino time to process the command
-        except:
+        except Exception:
             pass  # If sending fails, continue to close anyway
 
         try:
             if self.ser and self.ser.is_open:
                 self.ser.close()  # Close the serial port cleanly
-        except:
+        except Exception:
             pass
 
         self.root.destroy()  # Close the Tkinter window and end the program

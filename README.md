@@ -25,9 +25,9 @@ Traditional tensile testing machines are expensive and inaccessible for small re
 
 ## 💻 Software
 
-### Python GUI — `tensile_tester_gui.py`
+### Python GUI — `tensile_tester_guiV5.py`
 
-The main application (`Python application/tensile_tester_gui.py`) is a full-featured desktop GUI built with **Tkinter** and **Matplotlib**.
+The main application (`Python application/tensile_tester_guiV5.py`) is a full-featured desktop GUI built with **Tkinter** and **Matplotlib**.
 
 #### Features
 
@@ -47,7 +47,7 @@ The main application (`Python application/tensile_tester_gui.py`) is a full-feat
   - Engineering strain (Displacement / L₀)
   - Young's Modulus (least-squares fit over elastic region)
 - 💥 **Fracture detection** — automatically stops the test when force drops >20% from peak
-- 📁 **Export** — saves data as `.csv` and the current graph as a high-res `.png`
+- 📁 **Export** — saves data as `.csv` and the current graph as a high-res `.png` into `results/`
 - 🔄 **40-point moving average** — smooths noisy sensor readings in real time
 
 ---
@@ -58,15 +58,16 @@ The main application (`Python application/tensile_tester_gui.py`) is a full-feat
 MiniTensileMachine/
 │
 ├── Python application/
-│   └── tensile_tester_gui.py      # Main Python GUI application
+│   └── tensile_tester_guiV5.py   # Main Python GUI application
 │
 ├── Arduino codes/                 # Arduino firmware (serial data + motor control)
 │
 ├── PCB/                           # PCB design files
 │
-├── T1.csv / T2.csv / ...          # Sample test data (exported from GUI)
-├── T1.png / T2.png / ...          # Sample test plots
+├── results/                       # Exported test data (CSV + PNG plots)
+│   └── .gitkeep                   # Keeps the folder tracked; contents are git-ignored
 │
+├── requirements.txt               # Python dependencies
 └── README.md
 ```
 
@@ -77,7 +78,7 @@ MiniTensileMachine/
 ### Requirements
 
 ```bash
-pip install pyserial matplotlib
+pip install -r requirements.txt
 ```
 
 > Python 3.8+ and `tkinter` (included with standard Python on Windows) are required.
@@ -90,7 +91,7 @@ pip install pyserial matplotlib
 
 ```bash
 cd "Python application"
-python tensile_tester_gui.py
+python tensile_tester_guiV5.py
 ```
 
 4. The app will auto-detect the Arduino on the correct COM port.
@@ -103,7 +104,7 @@ python tensile_tester_gui.py
 4. Set the motor direction (**DIR UP** to pull the specimen).
 5. Click **▶ START** to begin the test.
 6. The machine will automatically stop when fracture is detected.
-7. Click **EXPORT** to save the data and plot.
+7. Click **EXPORT** to save the data and plot — the dialog opens in `results/` by default.
 
 ---
 
@@ -145,7 +146,7 @@ The GUI sends text commands to the Arduino:
 
 ## 📸 Screenshots
 
-> Test results and exported plots can be found in the root directory (`T1.png`, `T2.png`, etc.).
+> Exported test plots and data are saved to the `results/` folder.
 
 ---
 
