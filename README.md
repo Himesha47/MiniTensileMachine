@@ -25,9 +25,9 @@ Traditional tensile testing machines are expensive and inaccessible for small re
 
 ## 💻 Software
 
-### Python GUI — `tensile_tester_gui.py`
+### Python GUI — `tensile_tester_guiV5.py`
 
-The main application (`Python application/tensile_tester_gui.py`) is a full-featured desktop GUI built with **Tkinter** and **Matplotlib**.
+The main application (`gui/tensile_tester_guiV5.py`) is a full-featured desktop GUI built with **Tkinter** and **Matplotlib**.
 
 #### Features
 
@@ -47,7 +47,7 @@ The main application (`Python application/tensile_tester_gui.py`) is a full-feat
   - Engineering strain (Displacement / L₀)
   - Young's Modulus (least-squares fit over elastic region)
 - 💥 **Fracture detection** — automatically stops the test when force drops >30% from peak
-- 📁 **Export** — saves data as `.csv` and the current graph as a high-res `.png`
+- 📁 **Export** — saves data as `.csv` and the current graph as a high-res `.png` into `results/`
 - 🔄 **40-point moving average** — smooths noisy sensor readings in real time
 
 ---
@@ -57,25 +57,25 @@ The main application (`Python application/tensile_tester_gui.py`) is a full-feat
 ```
 MiniTensileMachine/
 │
-├── Python application/
-│   └── tensile_tester_gui.py      # Main Python GUI application
+├── firmware/
+│   ├── tensile_machine/           # Active firmware (upload this to the Arduino)
+│   │   └── tensile_machine.ino
+│   └── archive/                   # Earlier experimental sketches (reference only)
 │
-├── Arduino codes/                 # Arduino firmware versions
-│   ├── FinalTesting/              #   └── Final production firmware
-│   ├── Load_Cell_Calibration/     #   └── Calibration sketch
-│   └── ...                        #   └── Other development sketches
+├── gui/
+│   ├── tensile_tester_guiV5.py   # Main Python GUI application
+│   └── archive/                   # Older GUI versions (reference only)
 │
-├── PCB/                           # KiCad PCB & schematic design files
-│   ├── Tensile_Machine.kicad_sch  #   └── Top-level schematic
-│   └── Tensile_Machine/           #   └── PCB layout project
+├── hardware/
+│   └── pcb/                       # KiCad PCB and schematic files
 │
-├── Other tests/                   # Raw test data from polymer experiments
-│   └── Polymer/
+├── data/
+│   └── specimens/                 # Raw .txt data from manual test runs
 │
-├── data/                          # Exported test CSVs & plots (git-ignored)
+├── results/                       # Exported test data (CSV + PNG plots, git-ignored)
+│   └── .gitkeep
 │
 ├── requirements.txt               # Python dependencies
-├── .gitignore
 └── README.md
 ```
 
@@ -94,13 +94,13 @@ pip install -r requirements.txt
 
 ### Running the Application
 
-1. Upload the Arduino firmware from `Arduino codes/FinalTesting/` to the Arduino Uno.
+1. Upload `firmware/tensile_machine/tensile_machine.ino` to the Arduino Uno.
 2. Connect the Arduino via USB.
 3. Run the GUI:
 
 ```bash
-cd "Python application"
-python tensile_tester_gui.py
+cd gui
+python tensile_tester_guiV5.py
 ```
 
 4. The app will auto-detect the Arduino on the correct COM port.
@@ -113,7 +113,7 @@ python tensile_tester_gui.py
 4. Set the motor direction (**DIR UP** to pull the specimen).
 5. Click **▶ START** to begin the test.
 6. The machine will automatically stop when fracture is detected.
-7. Click **EXPORT** to save the data and plot.
+7. Click **EXPORT** to save the data and plot — the dialog opens in `results/` by default.
 
 ---
 
@@ -152,6 +152,13 @@ The GUI sends text commands to the Arduino:
 | `ZERO_LEN` | Zero the displacement sensor |
 
 ---
+
+## 📸 Screenshots
+
+> Exported test plots and data are saved to the `results/` folder.
+
+---
+
 
 ## 👨‍🔬 Author
 
