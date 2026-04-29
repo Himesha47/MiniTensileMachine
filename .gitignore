@@ -42,8 +42,8 @@ fp-info-cache
 *.tmp
 
 # KiCad generated output
-PCB/**/Gerber/
-PCB/**/*-backups/
+hardware/pcb/**/Gerber/
+hardware/pcb/**/*-backups/
 
 # ----- Arduino IDE -----
 *.elf

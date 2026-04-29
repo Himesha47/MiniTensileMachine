@@ -27,7 +27,7 @@ Traditional tensile testing machines are expensive and inaccessible for small re
 
 ### Python GUI — `tensile_tester_guiV5.py`
 
-The main application (`Python application/tensile_tester_guiV5.py`) is a full-featured desktop GUI built with **Tkinter** and **Matplotlib**.
+The main application (`gui/tensile_tester_guiV5.py`) is a full-featured desktop GUI built with **Tkinter** and **Matplotlib**.
 
 #### Features
 
@@ -57,15 +57,23 @@ The main application (`Python application/tensile_tester_guiV5.py`) is a full-fe
 ```
 MiniTensileMachine/
 │
-├── Python application/
-│   └── tensile_tester_guiV5.py   # Main Python GUI application
+├── firmware/
+│   ├── tensile_machine/           # Active firmware (upload this to the Arduino)
+│   │   └── tensile_machine.ino
+│   └── archive/                   # Earlier experimental sketches (reference only)
 │
-├── Arduino codes/                 # Arduino firmware (serial data + motor control)
+├── gui/
+│   ├── tensile_tester_guiV5.py   # Main Python GUI application
+│   └── archive/                   # Older GUI versions (reference only)
 │
-├── PCB/                           # PCB design files
+├── hardware/
+│   └── pcb/                       # KiCad PCB and schematic files
 │
-├── results/                       # Exported test data (CSV + PNG plots)
-│   └── .gitkeep                   # Keeps the folder tracked; contents are git-ignored
+├── data/
+│   └── specimens/                 # Raw .txt data from manual test runs
+│
+├── results/                       # Exported test data (CSV + PNG plots, git-ignored)
+│   └── .gitkeep
 │
 ├── requirements.txt               # Python dependencies
 └── README.md
@@ -85,12 +93,12 @@ pip install -r requirements.txt
 
 ### Running the Application
 
-1. Upload the Arduino firmware from `Arduino codes/` to the Arduino Uno.
+1. Upload `firmware/tensile_machine/tensile_machine.ino` to the Arduino Uno.
 2. Connect the Arduino via USB.
 3. Run the GUI:
 
 ```bash
-cd "Python application"
+cd gui
 python tensile_tester_guiV5.py
 ```
 
