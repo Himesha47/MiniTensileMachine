@@ -1,16 +1,16 @@
-import tkinter as tk                          # Create GUI applications
-from tkinter import ttk                      # Set of themed widgets
-import serial                                # Serial communication with Arduino
-import serial.tools.list_ports              # Detect which port the Arduino is on
-import time                                  # Time-related operations
-from collections import deque               # Data container for live incoming readings
-import csv                                   # Save data as spreadsheet-compatible files
-import os                                    # File and folder path operations
-from tkinter import filedialog              # Open the "Save As" window
+import tkinter as tk         # Create GUI applications
+from tkinter import ttk   # Set of themed widgets
+import serial  # Serial communication with Arduino
+import serial.tools.list_ports  # Detect which port the Arduino is on
+import time      # Time-related operations
+from collections import deque    # Data container for live incoming readings
+import csv    # Save data as spreadsheet-compatible files
+import os   # File and folder path operations
+from tkinter import filedialog  # Open the "Save As" window
 
-import matplotlib                            # Plotting library
-matplotlib.use("TkAgg")                     # Tell matplotlib to draw inside a Tkinter window
-import matplotlib.pyplot as plt             # Used to create the figure and axes
+import matplotlib   # Plotting library
+matplotlib.use("TkAgg")   # Tell matplotlib to draw inside a Tkinter window
+import matplotlib.pyplot as plt  # Used to create the figure and axes
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # Joins matplotlib graph into Tkinter window
 
 # ----------------------------------------------------------------------------
@@ -39,6 +39,15 @@ COLOR_BROKEN  = "#D93025"   # Status pill colour when fracture detected
 BREAK_DROP_FRACTION = 0.30  # 30% drop needed
 ELASTIC_WINDOW = 0.005     
 
+# Speed-to-mmPerStep lookup — must match Arduino setSpeed() exactly
+# mmPerStep = threadPitch / (stepsPerRev * microstepFactor)
+MM_PER_STEP = {
+    10:  1.5 / (200 * 16),   # 0.00046875 mm — microstep factor 16
+    20:  1.5 / (200 * 16),   # 0.00046875 mm — microstep factor 16
+    50:  1.5 / (200 * 16),   # 0.00046875 mm — microstep factor 16
+    100: 1.5 / (200 * 8),    # 0.00093750 mm — microstep factor 8
+}
+
 # -----------------------------------------------------------------
 # 2. METRIC CARD WIDGET
 #------------------------------------------------------------------
@@ -51,7 +60,7 @@ class MetricCard(ttk.Frame):
         # width  =  in pixels
 
         super().__init__(parent, style="Card.TFrame", **kw)  # Build the frame itself
-        self.configure(width=width)                           # Set the card width
+        self.configure(width=width)     # Set the card width
 
         # Label row — sits at the top of the card
         ttk.Label(self, text=label, style="CardLabel.TLabel").pack(anchor="w", padx=10, pady=(8, 0))
@@ -65,7 +74,7 @@ class MetricCard(ttk.Frame):
         # pady=(0,8) = 0px above, 8px below
 
         # The big number — stored in a StringVar so we can update it later
-        self._val_var = tk.StringVar(value="—")              # "—" means no data yet
+        self._val_var = tk.StringVar(value="—")    # "—" means no data yet
         ttk.Label(val_frame, textvariable=self._val_var,
                   style="CardValue.TLabel").pack(side="left")  # Number on the left
 
@@ -84,29 +93,34 @@ class MetricCard(ttk.Frame):
 # ------------------------------------------------------------------
 
 class TensileGUI:
-    def __init__(self, root):       # root = the main Tkinter window passed in from the bottom of the file
-        self.root = root            # Store the window so every method in the class can use it
+    def __init__(self, root):  # root = the main Tkinter window passed in from the bottom of the file
+        self.root = root   # Store the window so every method in the class can use it
         self.root.title("Mini Tensile Tester")
         self.root.configure(bg=COLOR_BG)  # Set the window background colour
 
-        self.ser     = None         # Serial object — None means not yet connected
-        self.running = False        # True while a test is running, False otherwise
+        self.ser     = None # Serial object — None means not yet connected
+        self.running = False  # True while a test is running, False otherwise
+        self.force_offset = 0.0  # Force offset applied after tare to ensure readings start at 0
+        self.taring = False  # True while waiting for Arduino to confirm TARE
+
+        self.current_speed  = 50   # Default speed mm/min — matches Arduino default
+        self.current_mmPerStep = MM_PER_STEP[50]  # mmPerStep matching default speed
 
         #Input validation 
         vcmd = (self.root.register(self._validate_positive), "%P") # entry box validation
 
         # Input variables (text entry boxes) 
-        self.L0_var = tk.StringVar(value="")   # Gauge length L0 in mm
-        self.W_var  = tk.StringVar(value="")   # Width in mm
-        self.T_var  = tk.StringVar(value="")   # Thickness in mm
-        self.A_var  = tk.StringVar(value="")   # Area mm² — auto calculated, read-only
+        self.L0_var = tk.StringVar(value="")  # Gauge length L0 in mm
+        self.W_var  = tk.StringVar(value="")  # Width in mm
+        self.T_var  = tk.StringVar(value="")  # Thickness in mm
+        self.A_var  = tk.StringVar(value="")  # Area mm² — auto calculated, read-only
         
         # Graph selector variable 
-        self.plot_mode_var = tk.StringVar(value="Force vs Displacement") # default graph  # Default graph shown at startup
+        self.plot_mode_var = tk.StringVar(value="Force vs Displacement") # Default graph shown at startup
 
         # Status bar variables 
         self.status_var    = tk.StringVar(value="Searching for Arduino…")  # Bottom status message
-        self.machine_state = tk.StringVar(value="IDLE")                    # Pill badge text
+        self.machine_state = tk.StringVar(value="IDLE")      # Pill badge text
 
         # Data buffers 
         # deque automatically deletes old values at maxlen
@@ -135,15 +149,15 @@ class TensileGUI:
         self.youngs_mod  = None  # Young's Modulus in MPa — calculated from elastic region
 
         # Build the window 
-        self._apply_styles()       # Set colours and fonts for all widgets
-        self._build_ui(vcmd)       # Place all buttons, cards, and the graph
+        self._apply_styles()  # Set colours and fonts for all widgets
+        self._build_ui(vcmd)   # Place all buttons, cards, and the graph
 
         self.set_ui_running(False) # Start in the idle state
         self.auto_connect_arduino()# Try to find and connect to the Arduino immediately
 
         # Repeating loops 
-        self.root.after(50,  self.read_serial)   # Read incoming serial data every 50 ms
-        self.root.after(200, self.update_plot)   # Refresh the graph every 200 ms
+        self.root.after(50,  self.read_serial)  # Read incoming serial data every 50 ms
+        self.root.after(200, self.update_plot)  # Refresh the graph every 200 ms
 
         # call on_close() instead of just quitting
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -167,21 +181,21 @@ class TensileGUI:
         # Metric card 
         s.configure("Card.TFrame",
                     background=COLOR_CARD,
-                    relief="solid",      # Draw a solid rectangle border
-                    borderwidth=1)       # 1 pixel thick
+                    relief="solid",   # Draw a solid rectangle border
+                    borderwidth=1)   # 1 pixel thick
 
         # Text styles used inside metric cards
-        s.configure("CardLabel.TLabel",      # Small label at the top
+        s.configure("CardLabel.TLabel",  # Small label at the top
                     background=COLOR_CARD,
                     foreground=COLOR_SUBTEXT,
                     font=FONT_LABEL)
 
-        s.configure("CardValue.TLabel",      # Big number
+        s.configure("CardValue.TLabel",   # Big number
                     background=COLOR_CARD,
                     foreground=COLOR_TEXT,
                     font=FONT_VALUE)
 
-        s.configure("CardUnit.TLabel",       # Unit beside the number
+        s.configure("CardUnit.TLabel",   # Unit beside the number
                     background=COLOR_CARD,
                     foreground=COLOR_SUBTEXT,
                     font=FONT_UNIT)
@@ -189,10 +203,10 @@ class TensileGUI:
         # START button — solid blue
         s.configure("Accent.TButton",
                     font=FONT_BTN,
-                    foreground="#FFFFFF",    # White text
+                    foreground="#FFFFFF",   # White text
                     background=COLOR_ACCENT, # Blue background
                     padding=(8, 4))
-        s.map("Accent.TButton",             # Colour changes for different button states
+        s.map("Accent.TButton",    # Colour changes for different button states
               background=[("active",   "#1446B0"),   # Darker blue when hovered/clicked
                           ("disabled", COLOR_BORDER)],# Grey when disabled
               foreground=[("disabled", COLOR_SUBTEXT)])
@@ -226,6 +240,25 @@ class TensileGUI:
 
         # Thin vertical/horizontal divider lines between button groups
         s.configure("Sep.TSeparator", background=COLOR_BORDER)
+
+        # Speed button styles — inactive (grey) and active (blue)
+        s.configure("Speed.TButton",
+                    font=("Courier New", 8, "bold"),
+                    padding=(3, 3),
+                    background=COLOR_BORDER,
+                    foreground=COLOR_TEXT)
+        s.map("Speed.TButton",
+              background=[("active",  "#BDBDBB"),
+                          ("disabled", COLOR_BORDER)])
+
+        s.configure("SpeedActive.TButton",
+                    font=FONT_BTN,
+                    padding=(3, 3),
+                    background=COLOR_ACCENT,
+                    foreground="#FFFFFF")
+        s.map("SpeedActive.TButton",
+              background=[("active",   "#1446B0"),
+                          ("disabled", COLOR_BORDER)])
 
 
     # -----------------------------------------------------------------
@@ -297,22 +330,22 @@ class TensileGUI:
                                     command=self.clear_data)
         self.btn_clear.grid(row=0, column=11, padx=8)
 
-        # Push the status labels to a little right
-        tb.grid_columnconfigure(12, weight=2)  # Column 12 expands → pushes columns 13/14 right
+        # Expand column 12 to keep status close to buttons
+        tb.grid_columnconfigure(12, weight=1)
 
-        # State pill (IDLE / RUNNING / BROKEN)
+        # State pill closer to the other buttons
         self.lbl_state = ttk.Label(tb,
                                    textvariable=self.machine_state,
                                    style="Status.TLabel")
-        self.lbl_state.grid(row=0, column=13, padx=(10, 4), sticky="e")
+        self.lbl_state.grid(row=0, column=13, padx=(4, 2), sticky="w")
 
-        # Connection status (e.g. "Connected · COM3")
+        # Connection status
         ttk.Label(tb,
                   textvariable=self.status_var,
                   font=("Courier New", 8),
                   background=COLOR_BG,
                   foreground=COLOR_SUBTEXT
-                  ).grid(row=0, column=14, padx=(0, 8), sticky="e")
+                  ).grid(row=0, column=14, padx=(0, 8), sticky="w")
 
         # ROW 1: INPUTS 
         inp = ttk.Frame(self.root, style="Toolbar.TFrame", padding=(10, 4))
@@ -373,26 +406,56 @@ class TensileGUI:
                                      width=20)
         self.mode_box.grid(row=0, column=9, padx=(0, 20))
 
+        # Speed selector added to input row
+        ttk.Separator(inp, orient="vertical",
+                      style="Sep.TSeparator").grid(row=0, column=10, sticky="ns", padx=8)
+
+        ttk.Label(inp,
+                  text="Speed (mm/min):",
+                  background=COLOR_BG,
+                  font=FONT_LABEL,
+                  foreground=COLOR_SUBTEXT
+                  ).grid(row=0, column=11, sticky="e", padx=(0, 4))
+
+        # One button per speed 
+        self.speed_buttons = {}
+        for i, spd in enumerate([10, 20, 50, 100]):
+            btn = ttk.Button(
+                inp,
+                text=str(spd),
+                style="Speed.TButton",
+                command=lambda s=spd: self.set_speed(s)
+            )
+            btn.grid(row=0, column=12 + i, padx=2)
+            self.speed_buttons[spd] = btn
+
+        # Highlight default speed on startup
+        self._highlight_speed_button(self.current_speed)
+
         # ROW 2: METRIC CARDS
-        # One row of six side-by-side white cards showing live numbers
+        # One row of side-by-side white cards showing live numbers
         cards_outer = ttk.Frame(self.root, style="Toolbar.TFrame", padding=(10, 6))
         cards_outer.grid(row=2, column=0, sticky="new")  # sticky="new" = top of the row, full width
 
         # Create each card using the MetricCard class defined above
-        self.card_force      = MetricCard(cards_outer, "CURRENT FORCE",        "N")
+        self.card_force      = MetricCard(cards_outer, "CURRENT FORCE",  "N")
         self.card_disp       = MetricCard(cards_outer, "CURRENT DISPLACEMENT", "mm")
-        self.card_peak_force = MetricCard(cards_outer, "PEAK FORCE",           "N")
-        self.card_peak_disp  = MetricCard(cards_outer, "PEAK DISPLACEMENT",    "mm")
-        self.card_break      = MetricCard(cards_outer, "BREAK FORCE",          "N",   width=140)
-        self.card_E          = MetricCard(cards_outer, "YOUNG'S MODULUS",      "MPa", width=170)
+        self.card_peak_force = MetricCard(cards_outer, "PEAK FORCE",  "N")
+        self.card_peak_disp  = MetricCard(cards_outer, "PEAK DISPLACEMENT",  "mm")
+        self.card_break      = MetricCard(cards_outer, "BREAK FORCE",   "N",   width=140)
+        self.card_E          = MetricCard(cards_outer, "YOUNG'S MODULUS", "MPa", width=170)
+        self.card_speed      = MetricCard(cards_outer, "SPEED", "mm/min", width=140)
 
         # Place each card into a column, side by side
         all_cards = [self.card_force, self.card_disp,
                      self.card_peak_force, self.card_peak_disp,
-                     self.card_break, self.card_E]
+                     self.card_break, self.card_E, self.card_speed]
 
         for i, card in enumerate(all_cards):
             card.grid(row=0, column=i, padx=(0, 8), sticky="w")
+
+        # Show the default speed in the speed card
+        self.card_speed.set(str(self.current_speed))
 
         # ROW 3: PLOT 
         # Create a matplotlib figure inside the Tkinter window
@@ -406,6 +469,35 @@ class TensileGUI:
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.root)
         self.canvas.get_tk_widget().grid(row=3, column=0, padx=10, pady=(0, 10), sticky="nsew")
         # sticky="nsew" = stretch in all four directions to fill the available space
+
+    # -------------------------------------------------------------
+    # SPEED CONTROL
+    # -------------------------------------------------------------
+
+    def set_speed(self, speed_mmPerMin):
+        """Send speed command to Arduino. Only works when test is not running."""
+        if self.running:
+            self.status_var.set("Cannot change speed during a test — press STOP first.")
+            return
+        if self.ser and self.ser.is_open:
+            self.ser.write(f"SPEED_{speed_mmPerMin}\n".encode())  # Send command to Arduino
+            self.current_speed = speed_mmPerMin  # Update local speed
+            self.current_mmPerStep = MM_PER_STEP[speed_mmPerMin]  # Update local mmPerStep
+            self.card_speed.set(str(speed_mmPerMin))  # Update speed card display
+            self._highlight_speed_button(speed_mmPerMin)  # Highlight active button
+            self.status_var.set(
+                f"Speed set to {speed_mmPerMin} mm/min  "
+                f"(mmPerStep = {self.current_mmPerStep:.7f} mm)")
+        else:
+            self.status_var.set("Arduino not connected — cannot set speed.")
+
+    def _highlight_speed_button(self, active_speed):
+        """Make the active speed button blue, all others grey."""
+        for spd, btn in self.speed_buttons.items():
+            if spd == active_speed:
+                btn.configure(style="SpeedActive.TButton")  # Blue = active
+            else:
+                btn.configure(style="Speed.TButton") # Grey = inactive
 
     def _update_area(self, *args):
         # Called automatically whenever width or thickness changes
@@ -535,10 +627,15 @@ class TensileGUI:
             # Show BROKEN if fracture was detected, otherwise show IDLE
             if self.break_force is not None:
                 self.machine_state.set("BROKEN")
-                self.lbl_state.configure(foreground=COLOR_BROKEN)       # Red
+                self.lbl_state.configure(foreground=COLOR_BROKEN)   # Red
             else:
                 self.machine_state.set("IDLE")
-                self.lbl_state.configure(foreground=COLOR_IDLE)         # Grey
+                self.lbl_state.configure(foreground=COLOR_IDLE)   # Grey
+
+        # Lock speed buttons when running — unlock when stopped
+        # Speed must not change mid-test as it would break displacement calculation
+        for btn in self.speed_buttons.values():
+            btn.state(["disabled"] if running else ["!disabled"])
 
 
     def set_dir(self, direction):
@@ -556,19 +653,18 @@ class TensileGUI:
         self.root.after(300, lambda: None)
 
     def do_tare(self):
-        # Send TARE command to Arduino to zero the load cell
         if self.send_cmd("TARE"):
-            # Clear averaging windows so old readings don't drag the average
+            # Capture offset NOW before clearing — window is still full of pre-tare readings
+            if len(self.force_window) == self.force_window.maxlen:
+                self.force_offset = sum(self.force_window) / self.force_window.maxlen
+            else:
+                self.force_offset = 0.0
+            # Now block new readings and clear old ones
+            self.taring = True
             self.force_window.clear()
             self.disp_window.clear()
-            # Immediately show 0 on the card
             self.card_force.set("  0.00")
-            # Fill the window with 40 zeros so the average stays at 0
-            # until real post-tare readings arrive from Arduino
-            for _ in range(self.force_window.maxlen):
-                self.force_window.append(0.0)
-            self.status_var.set("Tare done.")
-
+            self.status_var.set(f"Taring… Offset={self.force_offset:.3f}N")
 
     def _validate_positive(self, value):
         # Called automatically every time the user types in L0 or Area box
@@ -643,7 +739,7 @@ class TensileGUI:
                     self.force_window, self.disp_window):
             buf.clear()
 
-        self.t0_ms       = None   # Reset the time reference point
+        self.t0_ms = None   # Reset the time reference point
         self.peak_force  = 0.0
         self.peak_disp   = 0.0
         self.peak_stress = 0.0
@@ -703,7 +799,6 @@ class TensileGUI:
         except Exception as e:
             self.status_var.set(f"Save error: {e}")
 
-
     # -----------------------------------------------------------------
     # 9. READ SERIAL
     # -----------------------------------------------------------------
@@ -720,8 +815,14 @@ class TensileGUI:
 
                     # Skip non-data lines from the Arduino
                     if raw.startswith(("OK", "BOOT")):
-                        self.status_var.set(raw)  # Show acknowledgement or error in status bar
-                        continue
+                        if raw == "OK TARE":
+                            self.taring = False
+                            # Offset already captured in do_tare — just clear and reset
+                            self.force_window.clear()
+                            self.disp_window.clear()
+                            self.card_force.set("  0.00")
+                            self.status_var.set(f"Tare done. Offset={self.force_offset:.3f}N")
+
                     if raw == "ERR LIMIT":
                         continue  # Limit removed — ignore any stale messages
                     if raw.startswith("ERR"):
@@ -753,8 +854,15 @@ class TensileGUI:
                         self.t0_ms = t_ms
                     t_sec = (t_ms - self.t0_ms) / 1000.0  # Convert ms → s
 
-                    # Add raw reading to the 15-point moving average windows
-                    self.force_window.append(forceN)
+                    # Ignore all readings while Arduino is still taring
+                    if self.taring:
+                        continue
+                    # Spike filter to ignore readings more than 3 times the current average
+                    if len(self.force_window) == self.force_window.maxlen:
+                        current_avg = sum(self.force_window) / self.force_window.maxlen
+                        if current_avg > 0.5 and (forceN - self.force_offset) > current_avg * 3:
+                            continue  # Skip this spike reading
+                    self.force_window.append(forceN - self.force_offset)
                     self.disp_window .append(dispMM)
 
                     # Always compute live average for card display
@@ -996,9 +1104,9 @@ class TensileGUI:
                     xy=(bx, y_bottom),
                     fontsize=7.5,
                     color="#FF7A00",
-                    rotation=90,       # Rotate the text 90° so it runs vertically
-                    va="bottom",       # Align to bottom of the text box
-                    ha="right",        # Align to right of the text box
+                    rotation=90,    # Rotate the text 90° so it runs vertically
+                    va="bottom",   # Align to bottom of the text box
+                    ha="right",  # Align to right of the text box
                     zorder=5
                 )
 
@@ -1020,13 +1128,13 @@ class TensileGUI:
         try:
             if self.ser and self.ser.is_open:
                 self.ser.write(b"STOP\n")  # b"..." = bytes literal (no .encode() needed)
-                time.sleep(0.1)            # Give Arduino time to process the command
+                time.sleep(0.1)  # Give Arduino time to process the command
         except:
             pass  # If sending fails, continue to close anyway
 
         try:
             if self.ser and self.ser.is_open:
-                self.ser.close()           # Close the serial port cleanly
+                self.ser.close()  # Close the serial port cleanly
         except:
             pass
 
@@ -1037,7 +1145,7 @@ class TensileGUI:
 # ---------------------------------------------------------------
 
 if __name__ == "__main__":
-    root = tk.Tk()           # Create the main application window
-    root.state("zoomed")     # Start maximised (full screen)
-    app = TensileGUI(root)   # Build the entire GUI by creating a TensileGUI object
-    root.mainloop()          # Tkinter — runs until the window is closed
+    root = tk.Tk()   # Create the main application window
+    root.state("zoomed") # Start maximised (full screen)
+    app = TensileGUI(root) # Build the entire GUI by creating a TensileGUI object
+    root.mainloop()  # Tkinter — runs until the window is closed

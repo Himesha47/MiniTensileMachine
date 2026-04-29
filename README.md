@@ -46,7 +46,7 @@ The main application (`Python application/tensile_tester_gui.py`) is a full-feat
   - Engineering stress (Force / Area)
   - Engineering strain (Displacement / L₀)
   - Young's Modulus (least-squares fit over elastic region)
-- 💥 **Fracture detection** — automatically stops the test when force drops >20% from peak
+- 💥 **Fracture detection** — automatically stops the test when force drops >30% from peak
 - 📁 **Export** — saves data as `.csv` and the current graph as a high-res `.png`
 - 🔄 **40-point moving average** — smooths noisy sensor readings in real time
 
@@ -60,13 +60,22 @@ MiniTensileMachine/
 ├── Python application/
 │   └── tensile_tester_gui.py      # Main Python GUI application
 │
-├── Arduino codes/                 # Arduino firmware (serial data + motor control)
+├── Arduino codes/                 # Arduino firmware versions
+│   ├── FinalTesting/              #   └── Final production firmware
+│   ├── Load_Cell_Calibration/     #   └── Calibration sketch
+│   └── ...                        #   └── Other development sketches
 │
-├── PCB/                           # PCB design files
+├── PCB/                           # KiCad PCB & schematic design files
+│   ├── Tensile_Machine.kicad_sch  #   └── Top-level schematic
+│   └── Tensile_Machine/           #   └── PCB layout project
 │
-├── T1.csv / T2.csv / ...          # Sample test data (exported from GUI)
-├── T1.png / T2.png / ...          # Sample test plots
+├── Other tests/                   # Raw test data from polymer experiments
+│   └── Polymer/
 │
+├── data/                          # Exported test CSVs & plots (git-ignored)
+│
+├── requirements.txt               # Python dependencies
+├── .gitignore
 └── README.md
 ```
 
@@ -76,15 +85,16 @@ MiniTensileMachine/
 
 ### Requirements
 
-```bash
-pip install pyserial matplotlib
-```
+- Python 3.8+ with `tkinter` (included with standard Python on Windows)
+- Install dependencies:
 
-> Python 3.8+ and `tkinter` (included with standard Python on Windows) are required.
+```bash
+pip install -r requirements.txt
+```
 
 ### Running the Application
 
-1. Upload the Arduino firmware from `Arduino codes/` to the Arduino Uno.
+1. Upload the Arduino firmware from `Arduino codes/FinalTesting/` to the Arduino Uno.
 2. Connect the Arduino via USB.
 3. Run the GUI:
 
@@ -140,12 +150,6 @@ The GUI sends text commands to the Arduino:
 | `DIR DOWN` | Set motor direction to DOWN |
 | `TARE` | Zero the load cell |
 | `ZERO_LEN` | Zero the displacement sensor |
-
----
-
-## 📸 Screenshots
-
-> Test results and exported plots can be found in the root directory (`T1.png`, `T2.png`, etc.).
 
 ---
 

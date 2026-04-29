@@ -17,10 +17,12 @@ venv/
 env/
 
 # ----- Test data & exported results -----
-# CSV data files and PNG plots exported by the GUI
-# (keep them locally but don't track in git)
+# CSV data files and PNG/JPG plots exported by the GUI
+# (keep them locally in data/ but don't track in git)
+data/
 *.csv
 *.png
+*.jpg
 
 # If you want to track specific important images (e.g. screenshots for README),
 # use: git add -f <filename>
@@ -30,11 +32,13 @@ env/
 *.kicad_sch.lck
 *.kicad_pcb.lck
 *.kicad_pro.lck
+~*
 **/.history/
 *-backups/
 fp-info-cache
 *.bak
 *.tmp
+*.zip
 
 # KiCad generated output
 PCB/**/Gerber/
@@ -65,3 +69,6 @@ Desktop.ini
 .project
 .classpath
 .settings/
+
+# ----- Gemini / AI tools -----
+.gemini/
