@@ -1,0 +1,204 @@
+Test:60
+BatchNo: /	
+SampleNo: PE 1	
+Custom1: /	
+Custom2: 6	
+Custom3: 1	
+Custom4: 23.00	
+Custom5: /	
+Custom6: 6.00	
+Custom7: 0.00	
+Custom8: 3.05	
+Custom9: 5.69	
+Custom10: 1/1/2018	
+Custom11: 0.00	
+Custom12: 5.69	
+Custom13: /	
+Custom14: 0.00	
+Custom15: 0.00	
+Custom16: 0.00	
+Custom17: 0.51	
+Custom18: 100.00	
+Custom19: 0.00	
+Custom20: 0.00	
+Custom21: 0.00	
+Custom22: 200.00	
+Custom23: 500.00	
+Custom24: 0.00	
+Custom25: 0.00	
+Custom26: 0.00	
+Custom27: /	
+Custom28: /	
+Custom29: /	
+Custom30: /	
+Custom31: /	
+Custom32: /	
+Custom33: /	
+Custom34: /	
+Custom35: /	
+Custom36: /	
+Custom37: /	
+Custom38: /	
+Custom39: /	
+Custom40: /	
+
+=========================Curve==========================
+DataNumber:33
+Load			Extension			Broadwise Extension			Displacement			Stress			Strain			Time
+0.1000		0.2499		0.0000		-0.9163		0.0010		1.0865		0.2000
+0.2500		0.5219		0.0000		-1.1883		0.0025		2.2691		0.4000
+0.3000		0.7939		0.0000		-1.4603		0.0030		3.4517		0.6000
+0.4500		1.0659		0.0000		-1.7323		0.0045		4.6343		0.8000
+0.5500		1.3379		0.0000		-2.0043		0.0055		5.8170		1.0000
+0.6500		1.6099		0.0000		-2.2763		0.0065		6.9996		1.2000
+0.8000		1.8819		0.0000		-2.5483		0.0080		8.1822		1.4000
+0.9500		2.1556		0.0000		-2.8220		0.0095		9.3722		1.6000
+1.1500		2.4259		0.0000		-3.0923		0.0115		10.5474		1.8000
+1.3000		2.6979		0.0000		-3.3643		0.0130		11.7300		2.0000
+1.5000		2.9699		0.0000		-3.6363		0.0150		12.9126		2.2000
+1.6000		3.2419		0.0000		-3.9083		0.0160		14.0952		2.4000
+1.8000		3.5156		0.0000		-4.1820		0.0180		15.2852		2.6000
+1.9500		3.7859		0.0000		-4.4523		0.0195		16.4604		2.8000
+2.1000		4.0579		0.0000		-4.7243		0.0210		17.6430		3.0000
+2.2500		4.3299		0.0000		-4.9963		0.0225		18.8257		3.2000
+2.4000		4.6036		0.0000		-5.2700		0.0240		20.0157		3.4000
+2.5000		4.8739		0.0000		-5.5403		0.0250		21.1909		3.6000
+2.7000		5.1459		0.0000		-5.8123		0.0270		22.3735		3.8000
+2.8500		5.4179		0.0000		-6.0843		0.0285		23.5561		4.0000
+3.0500		5.6899		0.0000		-6.3563		0.0305		24.7387		4.2000
+0.6500		5.9619		0.0000		-6.6283		0.0065		25.9213		4.4000
+0.4500		6.2339		0.0000		-6.9003		0.0045		27.1039		4.6000
+0.3500		6.5059		0.0000		-7.1723		0.0035		28.2865		4.8000
+0.3500		6.7779		0.0000		-7.4443		0.0035		29.4691		5.0000
+0.3500		7.0499		0.0000		-7.7163		0.0035		30.6517		5.2000
+0.3500		7.3219		0.0000		-7.9883		0.0035		31.8343		5.4000
+0.3500		7.5956		0.0000		-8.2620		0.0035		33.0243		5.6000
+0.3000		7.8659		0.0000		-8.5323		0.0030		34.1996		5.8000
+0.3500		8.1379		0.0000		-8.8043		0.0035		35.3822		6.0000
+0.3500		8.4099		0.0000		-9.0763		0.0035		36.5648		6.2000
+0.3500		8.6819		0.0000		-9.3483		0.0035		37.7474		6.4000
+0.3500		8.9539		0.0000		-9.6203		0.0035		38.9300		6.6000
+
+=========================Analysis==========================
+nTakeDeforIndex: 0
+Pm_Visible: 1
+Pm_Index: 20
+Pm_Load: 3.0500
+Pm_Defor: 5.6899
+Pm_Stroke: -6.3563
+Pm_Stress: 0.0305
+Pm_Strain: 24.7387
+Pm_Time: 4.2000
+PeH_Visible: 1
+PeH_Index: 0
+PeH_Load: 0.0000
+PeH_Defor: 0.0000
+PeH_Stroke: 0.0000
+PeH_Stress: 0.0000
+PeH_Strain: 0.0000
+PeH_Time: 0.0000
+PeL_Visible: 0
+PeL_Index: 0
+PeL_Load: 0.0000
+PeL_Defor: 0.0000
+PeL_Stroke: 0.0000
+PeL_Stress: 0.0000
+PeL_Strain: 0.0000
+PeL_Time: 0.0000
+Pp_Visible: 0
+Pp_Index: 0
+Pp_Load: 0.0000
+Pp_Defor: 0.0000
+Pp_Stroke: 0.0000
+Pp_Stress: 0.0000
+Pp_Strain: 0.0000
+Pp_Time: 0.0000
+Pp1_Visible: 0
+Pp1_Index: 0
+Pp1_Load: 0.0000
+Pp1_Defor: 0.0000
+Pp1_Stroke: 0.0000
+Pp1_Stress: 0.0000
+Pp1_Strain: 0.0000
+Pp1_Time: 0.0000
+Pt_Visible: 0
+Pt_Index: 0
+Pt_Load: 0.0000
+Pt_Defor: 0.0000
+Pt_Stroke: 0.0000
+Pt_Stress: 0.0000
+Pt_Strain: 0.0000
+Pt_Time: 0.0000
+Pe_Visible: 0
+Pe_Index: 0
+Pe_Load: 0.0000
+Pe_Defor: 0.0000
+Pe_Stroke: 0.0000
+Pe_Stress: 0.0000
+Pe_Strain: 0.0000
+Pe_Time: 0.0000
+P1_Visible: 0
+P1_Index: 0
+P1_Load: 0.0000
+P1_Defor: 0.0000
+P1_Stroke: 0.0000
+P1_Stress: 0.0000
+P1_Strain: 0.0000
+P1_Time: 0.0000
+P2_Visible: 0
+P2_Index: 0
+P2_Load: 0.0000
+P2_Defor: 0.0000
+P2_Stroke: 0.0000
+P2_Stress: 0.0000
+P2_Strain: 0.0000
+P2_Time: 0.0000
+Pb_Visible: 1
+Pb_Index: 20
+Pb_Load: 3.0500
+Pb_Defor: 5.6899
+Pb_Stroke: -6.3563
+Pb_Stress: 0.0305
+Pb_Strain: 24.7387
+Pb_Time: 4.2000
+kE: 0.0000
+LP_Index1: 0
+LP_Index2: 0
+LP_Index3: 0
+LP_Index4: 0
+LP_Index5: 0
+LP_Index6: 0
+LP_Index7: 0
+LP_Index8: 0
+LP_Index9: 0
+LP_Index10: 0
+EP_Index1: 0
+EP_Index2: 0
+EP_Index3: 0
+EP_Index4: 0
+EP_Index5: 0
+EP_Index6: 0
+EP_Index7: 0
+EP_Index8: 0
+EP_Index9: 0
+EP_Index10: 0
+DP_Index1: 0
+DP_Index2: 0
+DP_Index3: 0
+DP_Index4: 0
+DP_Index5: 0
+DP_Index6: 0
+DP_Index7: 0
+DP_Index8: 0
+DP_Index9: 0
+DP_Index10: 0
+TP_Index1: 0
+TP_Index2: 0
+TP_Index3: 0
+TP_Index4: 0
+TP_Index5: 0
+TP_Index6: 0
+TP_Index7: 0
+TP_Index8: 0
+TP_Index9: 0
+TP_Index10: 0

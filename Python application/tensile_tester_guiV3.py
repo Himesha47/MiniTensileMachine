@@ -39,6 +39,16 @@ COLOR_BROKEN  = "#D93025"   # Status pill colour when fracture detected
 BREAK_DROP_FRACTION = 0.30  # 30% drop needed
 ELASTIC_WINDOW = 0.005     
 
+# Speed-to-mmPerStep lookup 
+# mmPerStep = threadPitch / (stepsPerRev * microstepFactor)
+MM_PER_STEP = {
+    10:  1.5 / (200 * 16),   # 0.00046875 mm — microstep factor 16
+    20:  1.5 / (200 * 16),   # 0.00046875 mm — microstep factor 16
+    50:  1.5 / (200 * 16),   # 0.00046875 mm — microstep factor 16
+    100: 1.5 / (200 * 8),    # 0.00093750 mm — microstep factor 8
+    200: 1.5 / (200 * 4),    # 0.00187500 mm — microstep factor 4
+}
+
 # -----------------------------------------------------------------
 # 2. METRIC CARD WIDGET
 #------------------------------------------------------------------
@@ -94,6 +104,8 @@ class TensileGUI:
         self.force_offset = 0.0  # Force offset applied after tare to ensure readings start at 0
         self.taring = False  # True while waiting for Arduino to confirm TARE
 
+        self.current_speed     = 50               # Default speed mm/min — matches Arduino default
+        self.current_mmPerStep = MM_PER_STEP[50]  # mmPerStep matching default speed
         #Input validation 
         vcmd = (self.root.register(self._validate_positive), "%P") # entry box validation
 
@@ -140,7 +152,43 @@ class TensileGUI:
         self._apply_styles()       # Set colours and fonts for all widgets
         self._build_ui(vcmd)       # Place all buttons, cards, and the graph
 
+        # -------------------------------------------------------------
+        # SPEED CONTROL
+        # -------------------------------------------------------------
+
+        def set_speed(self, speed_mmPerMin):
+            """Send speed command to Arduino. Only works when test is not running."""
+            if self.running:
+                self.status_var.set("Cannot change speed during a test — press STOP first.")
+                return
+            if self.ser and self.ser.is_open:
+                self.ser.write(f"SPEED_{speed_mmPerMin}\n".encode())  # Send command to Arduino
+                self.current_speed     = speed_mmPerMin               # Update local speed
+                self.current_mmPerStep = MM_PER_STEP[speed_mmPerMin]  # Update local mmPerStep
+                self.card_speed.set(str(speed_mmPerMin))              # Update speed card display
+                self._highlight_speed_button(speed_mmPerMin)          # Highlight active button
+                self.status_var.set(
+                    f"Speed set to {speed_mmPerMin} mm/min  "
+                    f"(mmPerStep = {self.current_mmPerStep:.7f} mm)")
+            else:
+                self.status_var.set("Arduino not connected — cannot set speed.")
+
+        def _highlight_speed_button(self, active_speed):
+            """Make the active speed button blue, all others grey."""
+            for spd, btn in self.speed_buttons.items():
+                if spd == active_speed:
+                    btn.configure(style="SpeedActive.TButton")  # Blue = active
+                else:
+                    btn.configure(style="Speed.TButton")        # Grey = inactive
+
+
         self.set_ui_running(False) # Start in the idle state
+
+        # Lock speed buttons when running — unlock when stopped
+        # Speed must not change mid-test as it would break displacement calculation
+        for btn in self.speed_buttons.values():
+            btn.configure(state="disabled" if running else "normal")
+
         self.auto_connect_arduino()# Try to find and connect to the Arduino immediately
 
         # Repeating loops 
@@ -228,6 +276,14 @@ class TensileGUI:
 
         # Thin vertical/horizontal divider lines between button groups
         s.configure("Sep.TSeparator", background=COLOR_BORDER)
+
+        # Speed button styles - inactive (grey) and active (blue)
+        s.configure("Speed.TButton",
+                    background=COLOR_BORDER,
+                    foreground=COLOR_TEXT)
+        s.configure("SpeedActive.TButton",
+                    background=COLOR_ACCENT,
+                    foreground="#FFFFFF")
 
 
     # -----------------------------------------------------------------
@@ -387,6 +443,11 @@ class TensileGUI:
         self.card_peak_disp  = MetricCard(cards_outer, "PEAK DISPLACEMENT",    "mm")
         self.card_break      = MetricCard(cards_outer, "BREAK FORCE",          "N",   width=140)
         self.card_E          = MetricCard(cards_outer, "YOUNG'S MODULUS",      "MPa", width=170)
+       
+        # Speed display card — shows currently selected speed
+        self.card_speed = MetricCard(cards_frame, "SPEED", "mm/min")
+        self.card_speed.pack(side="left", padx=4)
+        self.card_speed.set(str(self.current_speed))  # Show default speed
 
         # Place each card into a column, side by side
         all_cards = [self.card_force, self.card_disp,
@@ -703,6 +764,30 @@ class TensileGUI:
 
         except Exception as e:
             self.status_var.set(f"Save error: {e}")
+
+    # -----------------Speed selector buttons -------------------------
+    # Separator to visually separate speed buttons from control buttons
+    ttk.Separator(toolbar, orient="vertical").pack(side="left", fill="y", padx=8)
+
+    ttk.Label(toolbar,
+            text="SPEED (mm/min):",
+            background=COLOR_BG,
+            font=FONT_BTN).pack(side="left", padx=(0, 4))
+
+    # Create one button per speed — stored in dict for later enable/disable
+    self.speed_buttons = {}
+    for spd in [10, 20, 50, 100, 200]:
+        btn = ttk.Button(
+            toolbar,
+            text=str(spd),
+            style="Speed.TButton",
+            command=lambda s=spd: self.set_speed(s)  # lambda captures each speed value
+        )
+        btn.pack(side="left", padx=2)
+        self.speed_buttons[spd] = btn
+
+    # Highlight the default speed button on startup
+    self._highlight_speed_button(self.current_speed)        
 
 
     # -----------------------------------------------------------------

@@ -47,6 +47,7 @@ MM_PER_STEP = {
     50:  1.5 / (200 * 16),   # 0.00046875 mm — microstep factor 16
     100: 1.5 / (200 * 8),    # 0.00093750 mm — microstep factor 8
     200: 1.5 / (200 * 4),    # 0.00187500 mm — microstep factor 4
+    500: 1.5 / (200 * 2),    # 0.00375000 mm — microstep factor 2
 }
 
 # -----------------------------------------------------------------
@@ -244,8 +245,8 @@ class TensileGUI:
 
         # Speed button styles — inactive (grey) and active (blue)
         s.configure("Speed.TButton",
-                    font=FONT_BTN,
-                    padding=(4, 4),
+                    font=("Courier New", 8, "bold"),
+                    padding=(3, 3),
                     background=COLOR_BORDER,
                     foreground=COLOR_TEXT)
         s.map("Speed.TButton",
@@ -254,7 +255,7 @@ class TensileGUI:
 
         s.configure("SpeedActive.TButton",
                     font=FONT_BTN,
-                    padding=(4, 4),
+                    padding=(3, 3),
                     background=COLOR_ACCENT,
                     foreground="#FFFFFF")
         s.map("SpeedActive.TButton",
@@ -420,7 +421,7 @@ class TensileGUI:
 
         # One button per speed 
         self.speed_buttons = {}
-        for i, spd in enumerate([10, 20, 50, 100, 200]):
+        for i, spd in enumerate([10, 20, 50, 100, 200,]):
             btn = ttk.Button(
                 inp,
                 text=str(spd),

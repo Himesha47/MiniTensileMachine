@@ -26,15 +26,15 @@ const int PIN_MS3 = 12;
 const int motorStepsPerRev = 200;
 const float threadbarPitch_mmPerRev = 1.5;
 
-// Current speed state defaults to 50 mm/min
+// Current speed state — defaults to 50 mm/min
 int microstepFactor = 16;
-unsigned long stepPeriodUs = 563UL;   // Default 50 mm/min
+unsigned long stepPeriodUs = 563UL;  // Default 50 mm/min
 
 float mmPerStep() {
   return threadbarPitch_mmPerRev / (motorStepsPerRev * microstepFactor);
 }
 
-// Calibration factor
+// Calibration factor — determined experimentally during load cell calibration
 float countsPerNewton = 10698.0;
 
 //======================================================
@@ -44,9 +44,9 @@ float countsPerNewton = 10698.0;
 bool runningTest = false;
 
 long stepCount = 0;
-int dirSign = +1;
+int  dirSign = +1;
 
-long rawForce = 0;
+long  rawForce = 0;
 float forceN = 0.0;
 
 const unsigned long STREAM_PERIOD_MS = 50;
@@ -61,8 +61,8 @@ const unsigned long FORCE_READ_MS = 100;
 // 4) HELPERS
 //======================================================
 
-void enableDriver(){digitalWrite(PIN_EN, LOW);}
-void disableDriver(){digitalWrite(PIN_EN, HIGH);}
+void enableDriver(){ digitalWrite(PIN_EN, LOW); }
+void disableDriver(){ digitalWrite(PIN_EN, HIGH); }
 
 float rawToNewton(long raw){
   return raw / countsPerNewton;
@@ -83,73 +83,68 @@ void doStepPulse(){
 }
 
 // Set MS1, MS2, MS3 pins according to microstep factor
+// These pins control how many microsteps per full step
 void setMicrostepPins(int factor) {
   switch (factor){
-    case 1:// Full step - MS1=L MS2=L MS3=L
-      digitalWrite(PIN_MS1,LOW);
-      digitalWrite(PIN_MS2,LOW);
-      digitalWrite(PIN_MS3,LOW);
+    case 1:   // Full step — MS1=L MS2=L MS3=L
+      digitalWrite(PIN_MS1, LOW);
+      digitalWrite(PIN_MS2, LOW);
+      digitalWrite(PIN_MS3, LOW);
       break;
-    case 2:// Half step - MS1=H MS2=L MS3=L
-      digitalWrite(PIN_MS1,HIGH);
-      digitalWrite(PIN_MS2,LOW);
-      digitalWrite(PIN_MS3,LOW);
+    case 2:   // Half step — MS1=H MS2=L MS3=L
+      digitalWrite(PIN_MS1, HIGH);
+      digitalWrite(PIN_MS2, LOW);
+      digitalWrite(PIN_MS3, LOW);
       break;
-    case 4:// Quarter step - MS1=L MS2=H MS3=L
-      digitalWrite(PIN_MS1,LOW);
-      digitalWrite(PIN_MS2,HIGH);
-      digitalWrite(PIN_MS3,LOW);
+    case 4:   // Quarter step— MS1=L MS2=H MS3=L
+      digitalWrite(PIN_MS1, LOW);
+      digitalWrite(PIN_MS2, HIGH);
+      digitalWrite(PIN_MS3, LOW);
       break;
-    case 8:  // Eighth step- MS1=H MS2=H MS3=L
-      digitalWrite(PIN_MS1,HIGH);
-      digitalWrite(PIN_MS2,HIGH);
-      digitalWrite(PIN_MS3,LOW);
+    case 8:   // Eighth step — MS1=H MS2=H MS3=L
+      digitalWrite(PIN_MS1, HIGH);
+      digitalWrite(PIN_MS2, HIGH);
+      digitalWrite(PIN_MS3, LOW);
       break;
-    case 16: // Sixteenth step - MS1=H MS2=H MS3=H
-      digitalWrite(PIN_MS1,HIGH);
-      digitalWrite(PIN_MS2,HIGH);
-      digitalWrite(PIN_MS3,HIGH);
+    case 16:  // Sixteenth step— MS1=H MS2=H MS3=H
+      digitalWrite(PIN_MS1, HIGH);
+      digitalWrite(PIN_MS2, HIGH);
+      digitalWrite(PIN_MS3, HIGH);
       break;
     default:
-      // Default to sixteenth step
-      digitalWrite(PIN_MS1,HIGH);
-      digitalWrite(PIN_MS2,HIGH);
-      digitalWrite(PIN_MS3,HIGH);
+      // Default to sixteenth step if unknown factor given
+      digitalWrite(PIN_MS1, HIGH);
+      digitalWrite(PIN_MS2, HIGH);
+      digitalWrite(PIN_MS3, HIGH);
       microstepFactor = 16;
       break;
   }
 }
 
-// Set speed - updates both microstep factor and step period
+// Set speed — updates both microstep factor and step period together
+// Speed formula: speed = (1,000,000 / stepPeriodUs) x mmPerStep x 60
+// Speed can only be changed when test is not running — enforced in command handler
 void setSpeed(int speedMmPerMin) {
   switch (speedMmPerMin) {
     case 10:
       microstepFactor = 16;
-      stepPeriodUs    = 2813UL;  // 355.6 steps/sec: 10 mm/min
+      stepPeriodUs = 2813UL;  // 355.6 steps/sec: 10 mm/min
       break;
     case 20:
       microstepFactor = 16;
-      stepPeriodUs    = 1406UL;  // 711.1 steps/sec: 20 mm/min
+      stepPeriodUs = 1406UL;  // 711.1 steps/sec: 20 mm/min
       break;
     case 50:
       microstepFactor = 16;
-      stepPeriodUs    = 563UL;   // 1777.8 steps/sec:50 mm/min
+      stepPeriodUs = 563UL;   // 1777.8 steps/sec: 50 mm/min
       break;
     case 100:
       microstepFactor = 8;
-      stepPeriodUs    = 563UL;   // 1777.8 steps/sec:100 mm/min
-      break;
-    case 200:
-      microstepFactor = 4;
-      stepPeriodUs    = 563UL;   // 1777.8 steps/sec: 200 mm/min
-      break;
-    case 500:
-      microstepFactor = 2;
-      stepPeriodUs    = 450UL;   // 2222.2 steps/sec: 500 mm/min
+      stepPeriodUs = 563UL;   // 1777.8 steps/sec: 100 mm/min
       break;
     default:
       microstepFactor = 16;
-      stepPeriodUs    = 563UL;
+      stepPeriodUs = 563UL;
       break;
   }
   setMicrostepPins(microstepFactor);
@@ -212,12 +207,12 @@ void handleSerialCommands() {
     }
   }
 
-  // Speed commands - only accepted when test is not running
+  // Speed commands — only accepted when test is not running
+  // If sent during a test, Arduino replies ERR STOP_FIRST
   else if (cmd == "SPEED_10") {
     if (!runningTest) {
       setSpeed(10);
-      Serial.print("OK SPEED_10 mmPerStep=");
-      Serial.println(mmPerStep(), 7);
+      Serial.print("OK SPEED_10");
     } else {
       Serial.println("ERR STOP_FIRST");
     }
@@ -226,8 +221,7 @@ void handleSerialCommands() {
   else if (cmd == "SPEED_20") {
     if (!runningTest) {
       setSpeed(20);
-      Serial.print("OK SPEED_20 mmPerStep=");
-      Serial.println(mmPerStep(), 7);
+      Serial.print("OK SPEED_20 ");
     } else {
       Serial.println("ERR STOP_FIRST");
     }
@@ -236,8 +230,7 @@ void handleSerialCommands() {
   else if (cmd == "SPEED_50") {
     if (!runningTest) {
       setSpeed(50);
-      Serial.print("OK SPEED_50 mmPerStep=");
-      Serial.println(mmPerStep(), 7);
+      Serial.print("OK SPEED_50");
     } else {
       Serial.println("ERR STOP_FIRST");
     }
@@ -246,27 +239,7 @@ void handleSerialCommands() {
   else if (cmd == "SPEED_100") {
     if (!runningTest) {
       setSpeed(100);
-      Serial.print("OK SPEED_100 mmPerStep=");
-      Serial.println(mmPerStep(), 7);
-    } else {
-      Serial.println("ERR STOP_FIRST");
-    }
-  }
-
-  else if (cmd == "SPEED_200") {
-    if (!runningTest) {
-      setSpeed(200);
-      Serial.print("OK SPEED_200 mmPerStep=");
-      Serial.println(mmPerStep(), 7);
-    } else {
-      Serial.println("ERR STOP_FIRST");
-    }
-  }
-  else if (cmd == "SPEED_500") {
-    if (!runningTest) {
-      setSpeed(500);
-      Serial.print("OK SPEED_500 mmPerStep=");
-      Serial.println(mmPerStep(), 7);
+      Serial.print("OK SPEED_100");
     } else {
       Serial.println("ERR STOP_FIRST");
     }
@@ -281,15 +254,15 @@ void setup() {
   Serial.begin(9600);
   delay(800);
 
-  pinMode(PIN_STEP,OUTPUT);
+  pinMode(PIN_STEP, OUTPUT);
   pinMode(PIN_DIR,OUTPUT);
-  pinMode(PIN_EN,OUTPUT);
-  pinMode(PIN_MS1,OUTPUT);
+  pinMode(PIN_EN, OUTPUT);
+  pinMode(PIN_MS1, OUTPUT);
   pinMode(PIN_MS2,OUTPUT);
   pinMode(PIN_MS3,OUTPUT);
 
   disableDriver();
-  digitalWrite(PIN_DIR,HIGH);
+  digitalWrite(PIN_DIR, HIGH);
   dirSign = +1;
 
   // Default speed: 50 mm/min on startup
@@ -313,12 +286,13 @@ void loop() {
   if (loadCell.is_ready() && nowForceMs - lastForceReadMs >= FORCE_READ_MS) {
     lastForceReadMs = nowForceMs;
     rawForce = loadCell.read();
-    forceN   = rawToNewton(rawForce);
+    forceN = rawToNewton(rawForce);
   }
 
   float disp_mm = stepCount * mmPerStep();
 
-  // Stream data every 50 ms
+  // Stream data every 50 ms — sends even when test is not running
+  // so Python always has live force and displacement readings
   unsigned long nowMs = millis();
   if (nowMs - lastStreamMs >= STREAM_PERIOD_MS) {
     lastStreamMs = nowMs;
@@ -334,7 +308,9 @@ void loop() {
     return;
   }
 
-  // Motor stepping
+  // Motor stepping — only runs when test is active
+  // Checks if enough time has passed since last step
+  // stepPeriodUs controls the speed — smaller = faster
   unsigned long nowMicros = micros();
   if (nowMicros - lastStepUs >= stepPeriodUs) {
     lastStepUs = nowMicros;
