@@ -1,0 +1,193 @@
+Test:60
+BatchNo: /	
+SampleNo: /	
+Custom1: PE 2	
+Custom2: 6	
+Custom3: 1	
+Custom4: 23.00	
+Custom5: /	
+Custom6: 6.00	
+Custom7: 0.00	
+Custom8: 5.25	
+Custom9: 5.65	
+Custom10: 1/1/2018	
+Custom11: 0.00	
+Custom12: 5.65	
+Custom13: /	
+Custom14: 0.00	
+Custom15: 0.00	
+Custom16: 0.00	
+Custom17: 0.88	
+Custom18: 100.00	
+Custom19: 0.00	
+Custom20: 0.00	
+Custom21: 0.00	
+Custom22: 200.00	
+Custom23: 500.00	
+Custom24: 0.00	
+Custom25: 0.00	
+Custom26: 0.00	
+Custom27: /	
+Custom28: /	
+Custom29: /	
+Custom30: /	
+Custom31: /	
+Custom32: /	
+Custom33: /	
+Custom34: /	
+Custom35: /	
+Custom36: /	
+Custom37: /	
+Custom38: /	
+Custom39: /	
+Custom40: /	
+
+=========================Curve==========================
+DataNumber:22
+Load			Extension			Broadwise Extension			Displacement			Stress			Strain			Time
+0.5500		0.2057		0.0000		-0.3179		0.0917		0.8943		0.2000
+1.0500		0.4777		0.0000		-0.5899		0.1750		2.0770		0.4000
+1.3500		0.7497		0.0000		-0.8619		0.2250		3.2596		0.6000
+1.6000		1.0217		0.0000		-1.1339		0.2667		4.4422		0.8000
+1.9000		1.2937		0.0000		-1.4059		0.3167		5.6248		1.0000
+2.1500		1.5657		0.0000		-1.6779		0.3583		6.8074		1.2000
+2.3500		1.8377		0.0000		-1.9499		0.3917		7.9900		1.4000
+2.6000		2.1097		0.0000		-2.2219		0.4333		9.1726		1.6000
+2.8500		2.3817		0.0000		-2.4939		0.4750		10.3552		1.8000
+3.0500		2.6537		0.0000		-2.7659		0.5083		11.5378		2.0000
+3.3000		2.9257		0.0000		-3.0379		0.5500		12.7204		2.2000
+3.5000		3.1977		0.0000		-3.3099		0.5833		13.9030		2.4000
+3.7500		3.4697		0.0000		-3.5819		0.6250		15.0857		2.6000
+3.9500		3.7417		0.0000		-3.8539		0.6583		16.2683		2.8000
+4.1000		4.0137		0.0000		-4.1259		0.6833		17.4509		3.0000
+4.3500		4.2857		0.0000		-4.3979		0.7250		18.6335		3.2000
+4.5000		4.5577		0.0000		-4.6699		0.7500		19.8161		3.4000
+4.6500		4.8314		0.0000		-4.9436		0.7750		21.0061		3.6000
+4.9000		5.1017		0.0000		-5.2139		0.8167		22.1813		3.8000
+5.0000		5.3754		0.0000		-5.4876		0.8333		23.3713		4.0000
+5.2500		5.6474		0.0000		-5.7596		0.8750		24.5539		4.2000
+2.3500		5.9194		0.0000		-6.0316		0.3917		25.7365		4.4000
+
+=========================Analysis==========================
+nTakeDeforIndex: 0
+Pm_Visible: 1
+Pm_Index: 20
+Pm_Load: 5.2500
+Pm_Defor: 5.6474
+Pm_Stroke: -5.7596
+Pm_Stress: 0.8750
+Pm_Strain: 24.5539
+Pm_Time: 4.2000
+PeH_Visible: 1
+PeH_Index: 0
+PeH_Load: 0.0000
+PeH_Defor: 0.0000
+PeH_Stroke: 0.0000
+PeH_Stress: 0.0000
+PeH_Strain: 0.0000
+PeH_Time: 0.0000
+PeL_Visible: 0
+PeL_Index: 0
+PeL_Load: 0.0000
+PeL_Defor: 0.0000
+PeL_Stroke: 0.0000
+PeL_Stress: 0.0000
+PeL_Strain: 0.0000
+PeL_Time: 0.0000
+Pp_Visible: 0
+Pp_Index: 0
+Pp_Load: 0.0000
+Pp_Defor: 0.0000
+Pp_Stroke: 0.0000
+Pp_Stress: 0.0000
+Pp_Strain: 0.0000
+Pp_Time: 0.0000
+Pp1_Visible: 0
+Pp1_Index: 0
+Pp1_Load: 0.0000
+Pp1_Defor: 0.0000
+Pp1_Stroke: 0.0000
+Pp1_Stress: 0.0000
+Pp1_Strain: 0.0000
+Pp1_Time: 0.0000
+Pt_Visible: 0
+Pt_Index: 0
+Pt_Load: 0.0000
+Pt_Defor: 0.0000
+Pt_Stroke: 0.0000
+Pt_Stress: 0.0000
+Pt_Strain: 0.0000
+Pt_Time: 0.0000
+Pe_Visible: 0
+Pe_Index: 0
+Pe_Load: 0.0000
+Pe_Defor: 0.0000
+Pe_Stroke: 0.0000
+Pe_Stress: 0.0000
+Pe_Strain: 0.0000
+Pe_Time: 0.0000
+P1_Visible: 0
+P1_Index: 0
+P1_Load: 0.0000
+P1_Defor: 0.0000
+P1_Stroke: 0.0000
+P1_Stress: 0.0000
+P1_Strain: 0.0000
+P1_Time: 0.0000
+P2_Visible: 0
+P2_Index: 0
+P2_Load: 0.0000
+P2_Defor: 0.0000
+P2_Stroke: 0.0000
+P2_Stress: 0.0000
+P2_Strain: 0.0000
+P2_Time: 0.0000
+Pb_Visible: 1
+Pb_Index: 20
+Pb_Load: 5.2500
+Pb_Defor: 5.6474
+Pb_Stroke: -5.7596
+Pb_Stress: 0.8750
+Pb_Strain: 24.5539
+Pb_Time: 4.2000
+kE: 0.0000
+LP_Index1: 0
+LP_Index2: 0
+LP_Index3: 0
+LP_Index4: 0
+LP_Index5: 0
+LP_Index6: 0
+LP_Index7: 0
+LP_Index8: 0
+LP_Index9: 0
+LP_Index10: 0
+EP_Index1: 0
+EP_Index2: 0
+EP_Index3: 0
+EP_Index4: 0
+EP_Index5: 0
+EP_Index6: 0
+EP_Index7: 0
+EP_Index8: 0
+EP_Index9: 0
+EP_Index10: 0
+DP_Index1: 0
+DP_Index2: 0
+DP_Index3: 0
+DP_Index4: 0
+DP_Index5: 0
+DP_Index6: 0
+DP_Index7: 0
+DP_Index8: 0
+DP_Index9: 0
+DP_Index10: 0
+TP_Index1: 0
+TP_Index2: 0
+TP_Index3: 0
+TP_Index4: 0
+TP_Index5: 0
+TP_Index6: 0
+TP_Index7: 0
+TP_Index8: 0
+TP_Index9: 0
+TP_Index10: 0

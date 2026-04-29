@@ -1,0 +1,201 @@
+Info: Processing symbol 'A1:Module:Arduino_UNO_R3'.
+Info: Processing symbol 'A2:Module:Pololu_Breakout-16_15.2x20.3mm'.
+Info: Processing symbol 'C1:Capacitor_THT:C_Disc_D5.0mm_W2.5mm_P2.50mm'.
+Info: Processing symbol 'C2:Capacitor_THT:CP_Radial_D8.0mm_P3.50mm'.
+Info: Processing symbol 'J1:TerminalBlock:TerminalBlock_Xinya_XY308-2.54-4P_1x04_P2.54mm_Horizontal'.
+Info: Processing symbol 'J2:TerminalBlock:TerminalBlock_Xinya_XY308-2.54-4P_1x04_P2.54mm_Horizontal'.
+Info: Processing symbol 'J3:TerminalBlock:TerminalBlock_Xinya_XY308-2.54-2P_1x02_P2.54mm_Horizontal'.
+Info: Processing symbol 'J4:TerminalBlock:TerminalBlock_Xinya_XY308-2.54-4P_1x04_P2.54mm_Horizontal'.
+Info: Processing symbol 'J5:TerminalBlock:TerminalBlock_Xinya_XY308-2.54-4P_1x04_P2.54mm_Horizontal'.
+Add net unconnected-(A1-D2-Pad17).
+Connected A1 pin 17 to unconnected-(A1-D2-Pad17).
+Add net Net-(A1-D5).
+Connected A1 pin 20 to Net-(A1-D5).
+Add net unconnected-(A1-IOREF-Pad2).
+Connected A1 pin 2 to unconnected-(A1-IOREF-Pad2).
+Add net unconnected-(A1-AREF-Pad30).
+Connected A1 pin 30 to unconnected-(A1-AREF-Pad30).
+Add net /HX_DT.
+Connected A1 pin 23 to /HX_DT.
+Add net unconnected-(A1-3V3-Pad4).
+Connected A1 pin 4 to unconnected-(A1-3V3-Pad4).
+Add net unconnected-(A1-D7-Pad22).
+Connected A1 pin 22 to unconnected-(A1-D7-Pad22).
+Add net unconnected-(A1-D10-Pad25).
+Connected A1 pin 25 to unconnected-(A1-D10-Pad25).
+Add net unconnected-(A1-D6-Pad21).
+Connected A1 pin 21 to unconnected-(A1-D6-Pad21).
+Add net /DIR.
+Connected A1 pin 19 to /DIR.
+Add net unconnected-(A1-A3-Pad12).
+Connected A1 pin 12 to unconnected-(A1-A3-Pad12).
+Add net unconnected-(A1-NC-Pad1).
+Connected A1 pin 1 to unconnected-(A1-NC-Pad1).
+Add net unconnected-(A1-D13-Pad28).
+Connected A1 pin 28 to unconnected-(A1-D13-Pad28).
+Add net unconnected-(A1-D11-Pad26).
+Connected A1 pin 26 to unconnected-(A1-D11-Pad26).
+Add net unconnected-(A1-SDA/A4-Pad31).
+Connected A1 pin 31 to unconnected-(A1-SDA/A4-Pad31).
+Add net unconnected-(A1-D1/TX-Pad16).
+Connected A1 pin 16 to unconnected-(A1-D1/TX-Pad16).
+Add net +5V.
+Connected A1 pin 5 to +5V.
+Add net unconnected-(A1-A2-Pad11).
+Connected A1 pin 11 to unconnected-(A1-A2-Pad11).
+Add net unconnected-(A1-D12-Pad27).
+Connected A1 pin 27 to unconnected-(A1-D12-Pad27).
+Add net unconnected-(A1-A1-Pad10).
+Connected A1 pin 10 to unconnected-(A1-A1-Pad10).
+Add net /STEP.
+Connected A1 pin 18 to /STEP.
+Add net unconnected-(A1-~{RESET}-Pad3).
+Connected A1 pin 3 to unconnected-(A1-~{RESET}-Pad3).
+Add net GND.
+Connected A1 pin 29 to GND.
+Add net unconnected-(A1-SDA/A4-Pad13).
+Connected A1 pin 13 to unconnected-(A1-SDA/A4-Pad13).
+Add net unconnected-(A1-D0/RX-Pad15).
+Connected A1 pin 15 to unconnected-(A1-D0/RX-Pad15).
+Add net unconnected-(A1-VIN-Pad8).
+Connected A1 pin 8 to unconnected-(A1-VIN-Pad8).
+Add net unconnected-(A1-SCL/A5-Pad32).
+Connected A1 pin 32 to unconnected-(A1-SCL/A5-Pad32).
+Connected A1 pin 7 to GND.
+Add net unconnected-(A1-SCL/A5-Pad14).
+Connected A1 pin 14 to unconnected-(A1-SCL/A5-Pad14).
+Add net unconnected-(A1-A0-Pad9).
+Connected A1 pin 9 to unconnected-(A1-A0-Pad9).
+Connected A1 pin 6 to GND.
+Add net /HX_SCK.
+Connected A1 pin 24 to /HX_SCK.
+Updated A1 unit metadata.
+Added A2 (footprint 'Module:Pololu_Breakout-16_15.2x20.3mm').
+Changed REF** reference designator to A2.
+Changed A2 value from Pololu_Breakout-16_15.2x20.3mm to Pololu_Breakout_A4988.
+Updated A2 symbol association from  to /9ce11f0a-daac-48ad-9ff5-aed24f605efb.
+Updated A2 fields.
+Updated A2 sheetname to '/'.
+Updated A2 sheetfile to 'Tensile_Machine.kicad_sch'.
+Updated A2 footprint filters to 'Pololu*Breakout*15.2x20.3mm*'.
+Connected A2 pin 15 to /STEP.
+Connected A2 pin 11 to +5V.
+Connected A2 pin 2 to +5V.
+Add net +12V.
+Connected A2 pin 8 to +12V.
+Connected A2 pin 13 to +5V.
+Connected A2 pin 16 to /DIR.
+Connected A2 pin 12 to GND.
+Connected A2 pin 10 to +5V.
+Connected A2 pin 7 to GND.
+Add net /1B.
+Connected A2 pin 3 to /1B.
+Connected A2 pin 9 to Net-(A1-D5).
+Connected A2 pin 14 to +5V.
+Add net /2B.
+Connected A2 pin 6 to /2B.
+Add net /2A.
+Connected A2 pin 5 to /2A.
+Add net /1A.
+Connected A2 pin 4 to /1A.
+Connected A2 pin 1 to GND.
+Updated A2 unit metadata.
+Added A1 (footprint 'Module:Arduino_UNO_R3').
+Added C1 (footprint 'Capacitor_THT:C_Disc_D5.0mm_W2.5mm_P2.50mm').
+Changed REF** reference designator to C1.
+Changed C1 value from C_Disc_D5.0mm_W2.5mm_P2.50mm to 0.1uF.
+Updated C1 symbol association from  to /a392f29e-6ea6-410c-80fb-69ff1eea6aba.
+Updated C1 fields.
+Updated C1 sheetname to '/'.
+Updated C1 sheetfile to 'Tensile_Machine.kicad_sch'.
+Updated C1 footprint filters to 'C_*'.
+Connected C1 pin 1 to +5V.
+Connected C1 pin 2 to GND.
+Updated C1 unit metadata.
+Changed REF** reference designator to A1.
+Added C2 (footprint 'Capacitor_THT:CP_Radial_D8.0mm_P3.50mm').
+Changed REF** reference designator to C2.
+Changed C2 value from CP_Radial_D8.0mm_P3.50mm to 470uF.
+Updated C2 symbol association from  to /1f514063-8875-4d03-a3e9-da0d240c9436.
+Updated C2 fields.
+Updated C2 sheetname to '/'.
+Updated C2 sheetfile to 'Tensile_Machine.kicad_sch'.
+Updated C2 footprint filters to 'CP_*'.
+Connected C2 pin 2 to GND.
+Connected C2 pin 1 to +12V.
+Updated C2 unit metadata.
+Updated A1 symbol association from  to /e0d1e556-8547-4fa6-a76f-a9a0838d3b23.
+Added J1 (footprint 'TerminalBlock:TerminalBlock_Xinya_XY308-2.54-4P_1x04_P2.54mm_Horizontal').
+Changed REF** reference designator to J1.
+Changed J1 value from TerminalBlock_Xinya_XY308-2.54-4P_1x04_P2.54mm_Horizontal to Stepper motor.
+Updated J1 symbol association from  to /26a67c83-a84e-4405-9260-f3302d5805dd.
+Updated J1 fields.
+Updated J1 sheetname to '/'.
+Updated J1 sheetfile to 'Tensile_Machine.kicad_sch'.
+Updated J1 footprint filters to 'Connector*:*_1x??_*'.
+Connected J1 pin 1 to /1B.
+Connected J1 pin 3 to /2A.
+Connected J1 pin 4 to /2B.
+Connected J1 pin 2 to /1A.
+Updated J1 unit metadata.
+Updated A1 fields.
+Added J2 (footprint 'TerminalBlock:TerminalBlock_Xinya_XY308-2.54-4P_1x04_P2.54mm_Horizontal').
+Changed REF** reference designator to J2.
+Changed J2 value from TerminalBlock_Xinya_XY308-2.54-4P_1x04_P2.54mm_Horizontal to Load cell.
+Updated J2 symbol association from  to /47c7611e-49ea-4230-a9ca-6c8d696261cc.
+Updated J2 fields.
+Updated J2 sheetname to '/'.
+Updated J2 sheetfile to 'Tensile_Machine.kicad_sch'.
+Updated J2 footprint filters to 'Connector*:*_1x??_*'.
+Add net Net-(J2-Pin_1).
+Connected J2 pin 1 to Net-(J2-Pin_1).
+Add net Net-(J2-Pin_4).
+Connected J2 pin 4 to Net-(J2-Pin_4).
+Add net Net-(J2-Pin_2).
+Connected J2 pin 2 to Net-(J2-Pin_2).
+Add net Net-(J2-Pin_3).
+Connected J2 pin 3 to Net-(J2-Pin_3).
+Updated J2 unit metadata.
+Updated A1 sheetname to '/'.
+Added J3 (footprint 'TerminalBlock:TerminalBlock_Xinya_XY308-2.54-2P_1x02_P2.54mm_Horizontal').
+Changed REF** reference designator to J3.
+Changed J3 value from TerminalBlock_Xinya_XY308-2.54-2P_1x02_P2.54mm_Horizontal to Power supply.
+Updated J3 symbol association from  to /e6d3ee77-a735-4ffe-a698-87d4fa4ca9e0.
+Updated J3 fields.
+Updated J3 sheetname to '/'.
+Updated J3 sheetfile to 'Tensile_Machine.kicad_sch'.
+Updated J3 footprint filters to 'Connector*:*_1x??_*'.
+Connected J3 pin 2 to GND.
+Connected J3 pin 1 to +12V.
+Updated J3 unit metadata.
+Updated A1 sheetfile to 'Tensile_Machine.kicad_sch'.
+Added J4 (footprint 'TerminalBlock:TerminalBlock_Xinya_XY308-2.54-4P_1x04_P2.54mm_Horizontal').
+Changed REF** reference designator to J4.
+Changed J4 value from TerminalBlock_Xinya_XY308-2.54-4P_1x04_P2.54mm_Horizontal to HX711_LOAD.
+Updated J4 symbol association from  to /d505f5b6-755c-469a-85d0-f86fedeb9e4e.
+Updated J4 fields.
+Updated J4 sheetname to '/'.
+Updated J4 sheetfile to 'Tensile_Machine.kicad_sch'.
+Updated J4 footprint filters to 'Connector*:*_1x??_*'.
+Connected J4 pin 4 to Net-(J2-Pin_4).
+Connected J4 pin 2 to Net-(J2-Pin_2).
+Connected J4 pin 1 to Net-(J2-Pin_1).
+Connected J4 pin 3 to Net-(J2-Pin_3).
+Updated J4 unit metadata.
+Updated A1 footprint filters to 'Arduino*UNO*R3*'.
+Added J5 (footprint 'TerminalBlock:TerminalBlock_Xinya_XY308-2.54-4P_1x04_P2.54mm_Horizontal').
+Changed REF** reference designator to J5.
+Changed J5 value from TerminalBlock_Xinya_XY308-2.54-4P_1x04_P2.54mm_Horizontal to HX711_CTRL.
+Updated J5 symbol association from  to /12e2f7dd-3db3-4ff2-9b89-f2648dfc7185.
+Updated J5 fields.
+Updated J5 sheetname to '/'.
+Updated J5 sheetfile to 'Tensile_Machine.kicad_sch'.
+Updated J5 footprint filters to 'Connector*:*_1x??_*'.
+Connected J5 pin 4 to GND.
+Connected J5 pin 3 to /HX_SCK.
+Connected J5 pin 1 to +5V.
+Connected J5 pin 2 to /HX_DT.
+Updated J5 unit metadata.
+
+
+Info: Total warnings: 0, errors: 0.
