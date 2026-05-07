@@ -162,5 +162,5 @@ The GUI sends text commands to the Arduino:
 
 ## 👨‍🔬 Author
 
-Final Year Research Project — Department of Engineering  
+Final Year Research Project — Department of Physics 
 Built with Arduino, Python, and custom PCB hardware.
