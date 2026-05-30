@@ -1,15 +1,7 @@
 """
 Mini Tensile Tester — GUI Application
 ======================================
-Main desktop application for the MiniTensileMachine project.
 
-Requirements (install with):  pip install -r requirements.txt
-    pyserial >= 3.5
-    matplotlib >= 3.7
-    tkinter   (bundled with standard Python on Windows)
-
-Exported results (.csv / .png) are saved to the results/ folder
-by default when using the EXPORT button.
 """
 
 import tkinter as tk         # Create GUI applications
